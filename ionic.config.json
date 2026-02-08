@@ -1,0 +1,7 @@
+{
+  "name": "extension-admin-aksent",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
