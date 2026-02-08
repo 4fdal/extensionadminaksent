@@ -21,3 +21,7 @@ To use an Android Emulator you must use an API 24+ system image. The System WebV
 Running on the Command-Line
 To run the project on a device or emulator, run:
 > npx cap run android
+
+
+Debug
+> adb logcat | grep Capacitor
