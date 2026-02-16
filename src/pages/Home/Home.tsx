@@ -10,27 +10,31 @@ import ExploreContainer from "../../components/ExploreContainer";
 import "./Home.css";
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { useEffect, useState } from "react";
+import { Preferences } from "@capacitor/preferences";
 import { App } from "@capacitor/app";
 
 const Home: React.FC = () => {
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleShare = (event: any) => {
-      console.log("FULL EVENT:", event);
-      console.log("DETAIL:", event?.detail);
+    const checkPendingShare = async () => {
+      const obj = await Preferences.get({ key: "pendingImage" });
+      const { value } = obj;
+      console.log("LOGIONICS Found shared image:", JSON.stringify(obj));
 
-      const uri = Capacitor.convertFileSrc(event?.detail?.uri);
+      if (value) {
+        console.log("LOGIONICS Found shared image:", value);
 
-      console.log("URI:", uri);
-      setImageUri(uri);
+        const converted = Capacitor.convertFileSrc(value);
+
+        setImageUri(converted);
+
+        // 🔥 hapus setelah dipakai supaya tidak muncul lagi
+        await Preferences.remove({ key: "pendingImage" });
+      }
     };
 
-    window.addEventListener("shareImage", handleShare);
-
-    return () => {
-      window.removeEventListener("shareImage", handleShare);
-    };
+    checkPendingShare();
   }, []);
 
   const handleOpenBrowser = () => {
@@ -101,6 +105,7 @@ const Home: React.FC = () => {
         </IonHeader>
         <IonButton onClick={handleOpenBrowser}>Browser</IonButton>
         <IonButton onClick={handleGetData}>Get Data</IonButton>
+        <IonButton onClick={() => setImageUri(null)}>Reset Image</IonButton>
         <h1>Share Image : {imageUri}</h1>
 
         {imageUri && (
