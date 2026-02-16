@@ -25,3 +25,9 @@ To run the project on a device or emulator, run:
 
 Debug
 > adb logcat | grep Capacitor
+1. adb start-server
+2. adb devices (check device)
+3. open chrome browser with “chrome://inspect/#devices”
+WebView in io.ionic.starter (133.0.6943.137)
+Ionic App http://192.168.1.16:8100/home
+Inspect
