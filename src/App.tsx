@@ -32,20 +32,26 @@ import "@ionic/react/css/palettes/dark.system.css";
 
 /* Theme variables */
 import "./theme/variables.css";
+import "./theme/global.css";
+import PaymentPage from "./pages/Payment/Payment";
+import ValidationPage from "./pages/Validation/ValidationPage";
+import CustomerPage from "./pages/Customer/Customer";
 
 setupIonicReact();
 
 const App: React.FC = () => {
-  
   return (
     <IonApp>
       <IonReactRouter>
         <IonRouterOutlet>
-          <Route exact path="/home">
-            <Home />
-          </Route>
           <Route exact path="/">
-            <Redirect to="/home" />
+            <ValidationPage />
+          </Route>
+          <Route exact path="/customer">
+            <CustomerPage />
+          </Route>
+          <Route exact path="/payment">
+            <PaymentPage />
           </Route>
         </IonRouterOutlet>
       </IonReactRouter>

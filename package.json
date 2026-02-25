@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test.e2e": "cypress run",
     "test.unit": "vitest",
-    "dev:android": "ionic cap sync android && ionic cap run android --target Pixel_8_Pro && ionic cap run android --target Pixel_8_Pro --host=172.21.0.1 -l --external --verbose",
+    "run:android": "ionic cap sync android && ionic cap run android --target FMTKI7PZORKV8PPJ",
+    "dev:android": "ionic cap sync android && ionic cap run android --target FMTKI7PZORKV8PPJ -l --external --verbose",
     "emulator": "emulator -avd Pixel_8_Pro",
     "lint": "eslint"
   },
@@ -24,6 +25,7 @@
     "@capacitor/status-bar": "8.0.0",
     "@ionic/react": "^8.5.0",
     "@ionic/react-router": "^8.5.0",
+    "@tailwindcss/vite": "^4.1.18",
     "@types/react-router": "^5.1.20",
     "@types/react-router-dom": "^5.3.3",
     "cordova-plugin-inappbrowser": "^6.0.0",
@@ -31,7 +33,8 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-router": "^5.3.4",
-    "react-router-dom": "^5.3.4"
+    "react-router-dom": "^5.3.4",
+    "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.2",
