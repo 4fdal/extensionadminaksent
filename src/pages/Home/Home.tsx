@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   IonButton,
   IonContent,
@@ -84,8 +85,8 @@ const Home: React.FC = () => {
         }
       });
 
-      browser.addEventListener("message", (params) => {
-        const cookie: string = params.data.cookie;
+      browser.addEventListener("message", (params: any) => {
+        const cookie = params?.data?.cookie;
         console.log("Cookie : ", cookie);
         setCookie(cookie);
       });

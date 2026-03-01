@@ -1,37 +1,39 @@
-import { IonIcon } from "@ionic/react";
+import { IonButton, IonIcon, IonLoading, IonSpinner } from "@ionic/react";
 import {
   arrowDownOutline,
   arrowUpOutline,
   checkmarkOutline,
-  ellipsisVertical,
   funnelOutline,
   optionsOutline,
   search,
 } from "ionicons/icons";
 import React from "react";
-import DetailCardCustomer from "../customer/DetailCardCustomer";
 
-const DataList: React.FC = () => {
+export type DataListProp = {
+  children?: React.ReactNode;
+  loading?: boolean;
+  dataNotFound?: boolean;
+};
+
+const DataList: React.FC<DataListProp> = (props) => {
   return (
     <div className="h-100 flex flex-col">
       <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <button
             onClick={() => {}}
             className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-              true && 0 > 0
+              true
                 ? "bg-blue-500 border-blue-500 text-white"
                 : "border-gray-300 hover:border-gray-400"
             }`}
           >
-            {true && 0 > 0 && (
-              <IonIcon icon={checkmarkOutline} className="text-xs" />
-            )}
+            {true && <IonIcon icon={checkmarkOutline} className="text-xs" />}
           </button>
           <span className="text-xs text-gray-500">
-            {0 > 0 ? `${10} dipilih` : `${10} data`}
+            {true ? `${10} dipilih` : `${10} data`}
           </span>
-        </div>
+        </div> */}
         <div className="flex gap-2">
           <button
             onClick={() => {}}
@@ -49,7 +51,7 @@ const DataList: React.FC = () => {
             />
             Urutkan
           </button>
-          <button
+          {/* <button
             onClick={() => {}}
             className={`flex items-center gap-1 px-3 py-1.5 border rounded-lg text-xs font-medium transition-colors ${
               true
@@ -60,12 +62,30 @@ const DataList: React.FC = () => {
             <IonIcon icon={funnelOutline} className="text-sm" />
             Filter
             <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-          </button>
+          </button> */}
         </div>
       </div>
 
       <div className="p-4 space-y-3">
-        {1 === 0 ? (
+        {props.loading && (
+          <div className="text-center py-12">
+            <div className="rounded-full flex items-center justify-center mx-auto mb-4">
+              <IonSpinner
+                name="circular"
+                color="primary"
+                className="w-20 h-20"
+              />
+            </div>
+            <h3 className="text-gray-800 font-semibold text-lg mb-2">
+              Process load data
+            </h3>
+            <p className="text-gray-500 text-sm">
+              Tunggu beberapa saat, jangan meninggalkan halaman ini!
+            </p>
+          </div>
+        )}
+
+        {props.dataNotFound && !props.loading ? (
           <div className="text-center py-12">
             <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
               <IonIcon icon={search} className="text-4xl text-gray-400" />
@@ -76,15 +96,17 @@ const DataList: React.FC = () => {
             <p className="text-gray-500 text-sm">
               Coba ubah filter atau kata kunci pencarian
             </p>
-            <button
-              onClick={() => {}}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold"
+            <IonButton
+              className="mt-3"
+              style={{
+                "--border-radius": "10px",
+              }}
             >
               Reset Filter
-            </button>
+            </IonButton>
           </div>
         ) : (
-          <DetailCardCustomer />
+          !props.loading && props.children
         )}
       </div>
     </div>

@@ -1,3 +1,9 @@
+export type RequestCustomerParams = {
+  start?: number;
+  length?: number;
+  search?: string;
+};
+
 export type HomeCustomer = {
   totalvouchertoday: number;
   totalinvoicetoday: number;
@@ -64,11 +70,14 @@ export type UnpaidCustomerItem = {
 };
 
 export type PaymentCustomer = {
+  id: string | null;
   nolayanan: string;
   invoice: string;
   tanggalbayar: string;
   waktubayar: string;
   gambar: string;
+  create_at: string;
+  updated_at: string;
 };
 
 export type Customer = {
@@ -99,6 +108,10 @@ export type Customer = {
   nourut: number;
   isolirmanual: number;
   catatan: string | null;
+  ispaid: boolean;
+  paid?: PaidCustomerItem;
+  unpaid?: UnpaidCustomerItem;
+  paymenthistory?: PaymentCustomer;
 };
 
 // Interface untuk data pelanggan
@@ -106,7 +119,7 @@ export type UnpaidCustomer = {
   id: string;
   status: "BELUM" | "PROSES" | "PENDING";
   invoice: string;
-  noLayanan: string;
+  nolayanan: string;
   pelanggan: string;
   email: string;
   telepon: string;

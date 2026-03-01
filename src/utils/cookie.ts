@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 
 type OpenBrowserLoginGetCookieType = {
@@ -36,37 +38,51 @@ const handleOpenBrowserLoginGetCookie = async (
           }
         });
 
-        browser.addEventListener(
-          "message",
-          (params: { data: { cookie: string } }) => {
-            const cookie: string = params.data.cookie;
-            rev(cookie);
-          },
-        );
+        browser.addEventListener("message", (params: any) => {
+          const cookie: string = params?.data?.cookie;
+          rev(cookie);
+        });
       });
     });
 
     return cookie;
   } catch (error) {
-    console.log("[Error] handleOpenBrowserLoginGetCookie", error?.message);
+    console.log("[Error] handleOpenBrowserLoginGetCookie", error);
     return null;
   }
 };
 
+export const isExpiredCookie = async (
+  url: string,
+  cookie?: string | null | undefined,
+) => {
+  const response = await CapacitorHttp.get({
+    url,
+    headers: {
+      Cookie: cookie ?? "",
+    },
+  });
+
+  return response.url != url;
+};
+
 export const getCookieTungkaLilirAdmin = async (): Promise<string | null> => {
   const PREF_KEY_COOKIE = "COOKIE";
-  const pref = await Preferences.get({ key: PREF_KEY_COOKIE });
-  let cookie: string | null = pref?.value;
+  let cookie: string | null = (await Preferences.get({ key: PREF_KEY_COOKIE }))
+    .value;
 
-  if (!cookie) {
+  const openUrl = "https://tungkalilir.rlradius.app/adminrad";
+  const closeWithUrl = "https://tungkalilir.rlradius.app/home";
+
+  if (cookie == null || (await isExpiredCookie(closeWithUrl, cookie))) {
     cookie = await handleOpenBrowserLoginGetCookie({
-      openUrl: "https://tungkalilir.rlradius.app/adminrad",
-      closeWithUrl: "https://tungkalilir.rlradius.app/home",
+      openUrl,
+      closeWithUrl,
     });
   }
 
   if (cookie) {
-    Preferences.set({ key: PREF_KEY_COOKIE, value: cookie });
+    await Preferences.set({ key: PREF_KEY_COOKIE, value: cookie });
     return cookie;
   }
 

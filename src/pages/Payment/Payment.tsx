@@ -26,6 +26,8 @@ import {
   IonSkeletonText,
   IonThumbnail,
   IonRippleEffect,
+  IonButtons,
+  IonBackButton,
 } from "@ionic/react";
 import {
   person,
@@ -47,6 +49,7 @@ import {
   storefront,
   home,
   briefcase,
+  ellipsisVertical,
 } from "ionicons/icons";
 
 // Data dummy pelanggan yang lebih lengkap
@@ -286,10 +289,18 @@ const PaymentPage: React.FC = () => {
     <IonPage>
       {/* Header */}
       <IonHeader className="ion-no-border">
-        <IonToolbar className="!bg-blue-500">
-          <IonTitle className="text-center font-semibold tracking-wide text-white">
+        <IonToolbar className="bg-white">
+          <IonButtons slot="start">
+            <IonBackButton defaultHref="/customer" className="text-white" />
+          </IonButtons>
+          <IonTitle className="text-white font-bold text-lg">
             Pembayaran
           </IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={() => {}}>
+              <IonIcon icon={ellipsisVertical} className="text-gray-600" />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 

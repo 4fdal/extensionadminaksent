@@ -1,32 +1,27 @@
 import React, { useState } from "react";
 
-const HeaderFilterChipToolbar: React.FC = () => {
-  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+type Tap = { key: "UNPAID" | "PAID" | "ALL"; label: string; count: number };
+
+type HeaderFilterChipToolbarProp = {
+  taps: Array<Tap>;
+  onClick?: (tap: Tap) => void;
+};
+
+const HeaderFilterChipToolbar: React.FC<HeaderFilterChipToolbarProp> = (
+  props,
+) => {
+  const [selectedStatus, setSelectedStatus] = useState<string>("UNPAID");
 
   return (
     <div className="bg-white mt-2 px-4 pb-3">
       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-        {[
-          { key: "ALL", label: "Semua", count: 40 },
-          {
-            key: "BELUM",
-            label: "Belum Bayar",
-            count: 40,
-          },
-          {
-            key: "PROSES",
-            label: "Dalam Proses",
-            count: 40,
-          },
-          {
-            key: "PENDING",
-            label: "Pending",
-            count: 40,
-          },
-        ].map((status) => (
+        {props.taps.map((status) => (
           <div
             key={status.key}
-            onClick={() => setSelectedStatus(status.key)}
+            onClick={() => {
+              setSelectedStatus(status.key);
+              if (props.onClick) props.onClick(status);
+            }}
             className={`flex items-center gap-2 py-0.5 px-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
               selectedStatus === status.key
                 ? "bg-blue-500 text-white shadow-md shadow-blue-500/30"
@@ -48,4 +43,4 @@ const HeaderFilterChipToolbar: React.FC = () => {
   );
 };
 
-export default HeaderFilterChipToolbar;
+export default React.memo(HeaderFilterChipToolbar);
