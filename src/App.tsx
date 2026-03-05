@@ -36,26 +36,32 @@ import PaymentPage from "./pages/Payment/Payment";
 import ValidationPage from "./pages/Validation/ValidationPage";
 import CustomerPage from "./pages/Customer/Customer";
 import React from "react";
+import { useCustomer } from "./hook/requests/customer";
+import { AppContext } from "./context/app-context";
 
 setupIonicReact();
 
 const App: React.FC = () => {
+  const customer = useCustomer();
+
   return (
-    <IonApp>
-      <IonReactRouter>
-        <IonRouterOutlet>
-          <Route exact path="/">
-            <ValidationPage />
-          </Route>
-          <Route exact path="/customer">
-            <CustomerPage />
-          </Route>
-          <Route exact path="/payment" >
-            <PaymentPage />
-          </Route>
-        </IonRouterOutlet>
-      </IonReactRouter>
-    </IonApp>
+    <AppContext.Provider value={{ customer }}>
+      <IonApp>
+        <IonReactRouter>
+          <IonRouterOutlet>
+            <Route exact path="/">
+              <ValidationPage />
+            </Route>
+            <Route exact path="/customer">
+              <CustomerPage />
+            </Route>
+            <Route exact path="/payment">
+              <PaymentPage />
+            </Route>
+          </IonRouterOutlet>
+        </IonReactRouter>
+      </IonApp>
+    </AppContext.Provider>
   );
 };
 

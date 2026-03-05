@@ -1,9 +1,7 @@
-import { IonButton, IonIcon, IonLoading, IonSpinner } from "@ionic/react";
+import { IonButton, IonIcon, IonSpinner } from "@ionic/react";
 import {
   arrowDownOutline,
   arrowUpOutline,
-  checkmarkOutline,
-  funnelOutline,
   optionsOutline,
   search,
 } from "ionicons/icons";
@@ -113,4 +111,4 @@ const DataList: React.FC<DataListProp> = (props) => {
   );
 };
 
-export default DataList;
+export default React.memo(DataList);

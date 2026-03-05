@@ -48,6 +48,19 @@ export type PaidCustomerItem = {
   lastupdate: string;
 };
 
+export type ProfileCustomerItem = {
+  id: string;
+  namapelanggan: string;
+  phone: string;
+  npwp: string | null;
+  identitas: string | null;
+  alamat: string;
+  password: string | null;
+  saldo: string;
+  fullname: string;
+  aktif: number;
+};
+
 export type UnpaidCustomerItem = {
   invoice: string;
   namakategoriinvoice: string;
@@ -81,6 +94,7 @@ export type PaymentCustomer = {
 };
 
 export type Customer = {
+  [x: string]: string | null;
   nolayanan: string;
   pelanggan: string;
   namapelanggan: string;
@@ -112,6 +126,7 @@ export type Customer = {
   paid?: PaidCustomerItem;
   unpaid?: UnpaidCustomerItem;
   paymenthistory?: PaymentCustomer;
+  profile?: ProfileCustomerItem;
 };
 
 // Interface untuk data pelanggan

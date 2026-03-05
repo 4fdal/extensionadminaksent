@@ -16,6 +16,7 @@ import {
 import React from "react";
 import { differenceInDays } from "date-fns";
 import { useHistory } from "react-router";
+import { AppLauncher } from "@capacitor/app-launcher";
 
 type DetailCardCustomerProp = {
   customer?: Customer;
@@ -218,31 +219,37 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
 
       {/* Action Buttons */}
       <div className="px-4 pb-4 pl-10 flex-1 flex flex-row justify-between gap-2">
-        <div className="grid grid-cols-2 flex-1 gap-2">
+        <div className="flex-1 flex flex-row gap-2">
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
-              window.location.href = "https://wa.me/";
+              await AppLauncher.openUrl({
+                url: `whatsapp://send?phone=62${props.customer?.profile?.phone.substring(1)}`,
+              });
             }}
-            className="col-span-1"
+            className="flex-1"
           >
             <span className=" px-3 py-2 flex-row  bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
               <IonIcon icon={callOutline} className="text-sm" />
               Hubungi
             </span>
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              history.push("/payment");
-            }}
-            className="col-span-1"
-          >
-            <span className=" px-3 py-2 flex-row items-center bg-green-50 text-green-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors flex justify-center gap-1">
-              <IonIcon icon={cashOutline} className="text-sm" />
-              Bayar
-            </span>
-          </button>
+          {!props.customer?.ispaid && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                history.push(
+                  "/payment?invoice=" + props.customer?.unpaid?.invoice,
+                );
+              }}
+              className="flex-1"
+            >
+              <span className=" px-3 py-2 flex-row items-center bg-green-50 text-green-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors flex justify-center gap-1">
+                <IonIcon icon={cashOutline} className="text-sm" />
+                Bayar
+              </span>
+            </button>
+          )}
         </div>
         {/* <button
           onClick={(e) => {

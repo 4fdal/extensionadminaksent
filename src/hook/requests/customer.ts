@@ -3,13 +3,14 @@ import {
   DataTableResponse,
   HomeCustomer,
   PaidCustomerItem,
+  ProfileCustomerItem,
   RequestCustomerParams,
   UnpaidCustomerItem,
 } from "@/types/customer";
 import { getCookieTungkaLilirAdmin } from "@/utils/cookie";
 import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
-import { useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useMemo, useState } from "react";
 
 export const httpGetHomeCustomer = async (): Promise<HomeCustomer | null> => {
   const cookie = await getCookieTungkaLilirAdmin();
@@ -24,6 +25,99 @@ export const httpGetHomeCustomer = async (): Promise<HomeCustomer | null> => {
     });
 
     return JSON.parse(response.data) as HomeCustomer;
+  }
+
+  return null;
+};
+
+export const httpGetProfileCustomer = async (
+  params: RequestCustomerParams,
+): Promise<DataTableResponse<ProfileCustomerItem> | null> => {
+  const cookie = await getCookieTungkaLilirAdmin();
+  if (cookie) {
+    const response = await CapacitorHttp.post({
+      url: "https://tungkalilir.rlradius.app/pelanggan/data",
+      headers: {
+        Accept: "application/json, text/javascript, */*; q=0.01",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        Cookie: cookie,
+      },
+
+      data: new URLSearchParams({
+        draw: "1",
+        "columns[0][data]": "id",
+        "columns[0][name]": "",
+        "columns[0][searchable]": "true",
+        "columns[0][orderable]": "false",
+        "columns[0][search][value]": "",
+        "columns[0][search][regex]": "false",
+
+        "columns[1][data]": "id",
+        "columns[1][name]": "",
+        "columns[1][searchable]": "true",
+        "columns[1][orderable]": "true",
+        "columns[1][search][value]": "",
+        "columns[1][search][regex]": "false",
+
+        "columns[2][data]": "namapelanggan",
+        "columns[2][name]": "",
+        "columns[2][searchable]": "true",
+        "columns[2][orderable]": "true",
+        "columns[2][search][value]": "",
+        "columns[2][search][regex]": "false",
+
+        "columns[3][data]": "phone",
+        "columns[3][name]": "",
+        "columns[3][searchable]": "true",
+        "columns[3][orderable]": "false",
+        "columns[3][search][value]": "",
+        "columns[3][search][regex]": "false",
+
+        "columns[4][data]": "alamat",
+        "columns[4][name]": "",
+        "columns[4][searchable]": "true",
+        "columns[4][orderable]": "false",
+        "columns[4][search][value]": "",
+        "columns[4][search][regex]": "false",
+
+        "columns[5][data]": "saldo",
+        "columns[5][name]": "",
+        "columns[5][searchable]": "true",
+        "columns[5][orderable]": "false",
+        "columns[5][search][value]": "",
+        "columns[5][search][regex]": "false",
+
+        "columns[6][data]": "fullname",
+        "columns[6][name]": "",
+        "columns[6][searchable]": "true",
+        "columns[6][orderable]": "true",
+        "columns[6][search][value]": "",
+        "columns[6][search][regex]": "false",
+
+        "columns[7][data]": "phone",
+        "columns[7][name]": "",
+        "columns[7][searchable]": "true",
+        "columns[7][orderable]": "false",
+        "columns[7][search][value]": "",
+        "columns[7][search][regex]": "false",
+
+        "order[0][column]": "1",
+        "order[0][dir]": "desc",
+
+        start: (params?.start ?? 0).toString(),
+        length: (params?.length ?? 25).toString(),
+
+        "search[value]": params?.search ?? "",
+        "search[regex]": "false",
+      }).toString(),
+    });
+
+    return response.status == 200
+      ? typeof response.data == "string"
+        ? JSON.parse(response.data)
+        : response.data
+      : null;
   }
 
   return null;
@@ -585,37 +679,47 @@ export const httpGetAllCustomer = async (): Promise<Array<Customer>> => {
   return allDataCustomers;
 };
 
-export const useCustomer = () => {
+export type ResultUseCustomer = {
+  customers: Customer[];
+  totalCustomer: number;
+  totalPaidCustomer: number;
+  totalUnpaidCustomer: number;
+  setTabFilter: Dispatch<SetStateAction<"UNPAID" | "PAID" | "ALL">>;
+  syncAllCustomers(): Promise<void>;
+  reqAllCustomers(): Promise<void>;
+};
+
+export const useCustomer = (): ResultUseCustomer => {
   const [customers, setCustomers] = useState<Array<Customer>>([]);
   const [totalCustomer, setTotalCustomer] = useState<number>(0);
   const [totalPaidCustomer, setTotalPaidCustomer] = useState<number>(0);
   const [totalUnpaidCustomer, setTotalUnpaidCustomer] = useState<number>(0);
 
-  const [tapFilter, setTapFilter] = useState<"UNPAID" | "PAID" | "ALL">(
+  const [tabFilter, setTabFilter] = useState<"UNPAID" | "PAID" | "ALL">(
     "UNPAID",
   );
 
   const filteredCustomers = useMemo(() => {
     let dataFilter = customers;
 
-    if (tapFilter === "UNPAID") {
+    if (tabFilter === "UNPAID") {
       dataFilter = dataFilter.filter((c) => !c.ispaid);
     }
-    if (tapFilter === "PAID") {
+    if (tabFilter === "PAID") {
       dataFilter = dataFilter.filter((c) => c.ispaid);
     }
 
     return dataFilter;
-  }, [customers, tapFilter]);
+  }, [customers, tabFilter]);
 
   return {
     customers: filteredCustomers,
     totalCustomer,
     totalPaidCustomer,
     totalUnpaidCustomer,
-    setTapFilter,
+    setTabFilter,
     async syncAllCustomers() {},
-    async reqAllCustomers() {
+    async reqAllCustomers(resync: boolean = false) {
       try {
         const check = await httpGetHomeCustomer();
         if (!check) return;
@@ -626,12 +730,15 @@ export const useCustomer = () => {
         let allDataCustomers: Array<Customer> = [];
         let dtUnpaidCustomer: DataTableResponse<UnpaidCustomerItem> | null =
           null;
+        let dtProfileCustomer: DataTableResponse<ProfileCustomerItem> | null =
+          null;
         let dtPaidCustomer: DataTableResponse<PaidCustomerItem> | null = null;
 
         let pref = await Preferences.get({
           key: "allDataCustomers",
         });
-        if (pref.value) {
+
+        if (pref.value && !resync) {
           allDataCustomers = JSON.parse(pref.value);
         } else {
           allDataCustomers = await httpGetAllCustomer();
@@ -642,9 +749,22 @@ export const useCustomer = () => {
         }
 
         pref = await Preferences.get({
+          key: "dtProfileCustomer",
+        });
+        if (pref.value && !resync) {
+          dtProfileCustomer = JSON.parse(pref.value);
+        } else {
+          dtProfileCustomer = await httpGetProfileCustomer({ length });
+          await Preferences.set({
+            key: "dtProfileCustomer",
+            value: JSON.stringify(dtProfileCustomer),
+          });
+        }
+
+        pref = await Preferences.get({
           key: "dtUnpaidCustomer",
         });
-        if (pref.value) {
+        if (pref.value && !resync) {
           dtUnpaidCustomer = JSON.parse(pref.value);
         } else {
           dtUnpaidCustomer = await httpGetUnpaidCustomer({ length });
@@ -657,7 +777,7 @@ export const useCustomer = () => {
         pref = await Preferences.get({
           key: "dtPaidCustomer",
         });
-        if (pref.value) {
+        if (pref.value && !resync) {
           dtPaidCustomer = JSON.parse(pref.value);
         } else {
           dtPaidCustomer = await httpGetPaidCustomer({ length });
@@ -671,7 +791,16 @@ export const useCustomer = () => {
         setTotalPaidCustomer(dtPaidCustomer?.data.length ?? 0);
         setTotalUnpaidCustomer(dtUnpaidCustomer?.data.length ?? 0);
 
-        if (allDataCustomers.length > 0 && dtPaidCustomer && dtUnpaidCustomer) {
+        if (
+          allDataCustomers.length > 0 &&
+          dtProfileCustomer &&
+          dtPaidCustomer &&
+          dtUnpaidCustomer
+        ) {
+          const profileMap = new Map(
+            dtProfileCustomer.data.map((item) => [item.id, item]),
+          );
+
           const unpaidMap = new Map(
             dtUnpaidCustomer.data.map((item) => [item.nolayanan, item]),
           );
@@ -681,6 +810,7 @@ export const useCustomer = () => {
           );
 
           const merged = allDataCustomers.map((cusItem) => {
+            const profile = profileMap.get(cusItem.pelanggan);
             const unpaid = unpaidMap.get(cusItem.nolayanan);
             const paid = paidMap.get(cusItem.nolayanan);
 
@@ -689,6 +819,7 @@ export const useCustomer = () => {
               ispaid: !unpaid,
               unpaid,
               paid,
+              profile,
             };
           });
 
