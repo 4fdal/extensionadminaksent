@@ -15,8 +15,8 @@
     "postinstall": "node ./scripts/modify-typeorm.cjs",
     "test.e2e": "cypress run",
     "test.unit": "vitest",
-    "build:android": "ionic cap sync android && ionic cap run android --target FMTKI7PZORKV8PPJ",
-    "dev:android": "ionic cap sync android && ionic cap run android --target FMTKI7PZORKV8PPJ -l --external --verbose",
+    "build:android": "ionic cap sync android && ionic cap run android --target 087302528C003534",
+    "dev:android": "ionic cap sync android && ionic cap run android --target 087302528C003534 -l --external --verbose",
     "emulator": "emulator -avd Pixel_8_Pro",
     "lint": "eslint"
   },
@@ -33,6 +33,7 @@
     "@capacitor/status-bar": "8.0.0",
     "@capacitor/toast": "^8.0.1",
     "@capawesome/capacitor-file-picker": "^8.0.2",
+    "@capgo/capacitor-share-target": "^8.0.20",
     "@ionic/pwa-elements": "^3.4.0",
     "@ionic/react": "^8.5.0",
     "@ionic/react-router": "^8.5.0",

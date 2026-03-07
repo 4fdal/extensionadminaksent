@@ -269,15 +269,17 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
           <IonIcon icon={cashOutline} className="text-sm" />
           Bayar
         </button> */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
-          <span className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
-            <IonIcon icon={eyeOutline} className="text-sm" />
-          </span>
-        </button>
+        {props.customer?.ispaid && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <span className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
+              <IonIcon icon={eyeOutline} className="text-sm" />
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

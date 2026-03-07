@@ -12,7 +12,6 @@ import "./Home.css";
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { useEffect, useState } from "react";
 import { Preferences } from "@capacitor/preferences";
-import { App } from "@capacitor/app";
 
 const Home: React.FC = () => {
   const [imageUri, setImageUri] = useState<string | null>(null);

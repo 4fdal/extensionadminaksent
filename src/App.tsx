@@ -1,4 +1,4 @@
-import { Route } from "react-router-dom";
+import { Redirect, Route } from "react-router-dom";
 import { IonApp, IonRouterOutlet, setupIonicReact } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 
@@ -33,30 +33,34 @@ import "@ionic/react/css/palettes/dark.system.css";
 import "./theme/variables.css";
 import "./theme/global.css";
 import PaymentPage from "./pages/Payment/Payment";
-import ValidationPage from "./pages/Validation/ValidationPage";
 import CustomerPage from "./pages/Customer/Customer";
 import React from "react";
 import { useCustomer } from "./hook/requests/customer";
 import { AppContext } from "./context/app-context";
+import { useShareTarget } from "./hook/share-target";
 
 setupIonicReact();
 
 const App: React.FC = () => {
   const customer = useCustomer();
+  const imageShare = useShareTarget();
 
   return (
-    <AppContext.Provider value={{ customer }}>
+    <AppContext.Provider value={{ customer, imageShare }}>
       <IonApp>
         <IonReactRouter>
           <IonRouterOutlet>
-            <Route exact path="/">
+            {/* <Route exact path="/">
               <ValidationPage />
-            </Route>
+            </Route> */}
             <Route exact path="/customer">
               <CustomerPage />
             </Route>
             <Route exact path="/payment">
               <PaymentPage />
+            </Route>
+            <Route exact path="/">
+              <Redirect to="/customer" />
             </Route>
           </IonRouterOutlet>
         </IonReactRouter>

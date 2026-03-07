@@ -1,14 +1,27 @@
 import { IonSearchbar, IonToolbar } from "@ionic/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-const TextSearchToolbar: React.FC = () => {
+type TextSearchToolbarProp = {
+  onChange?: (searchText: string) => void;
+};
+
+const TextSearchToolbar: React.FC<TextSearchToolbarProp> = (props) => {
+  const [searchText, setSearchText] = useState<string | null | undefined>("");
+
+  useEffect(() => {
+    if (props.onChange) props.onChange(searchText ?? "");
+  }, [searchText, props]);
+
   return (
     <IonToolbar className="bg-white pb-2">
       <div className="px-4">
         <div className="relative rounded-full p-0.5 bg-white">
           <IonSearchbar
-            value=""
-            onIonChange={(e: any) => {}}
+            value={searchText}
+            onIonClear={() => setSearchText("")}
+            onKeyUp={(e) => {
+              setSearchText(e.currentTarget.value);
+            }}
             placeholder="Cari invoice, pelanggan, layanan..."
             className="p-0 bg-gray-100 rounded-full"
             style={{ "--box-shadow": "none" }}

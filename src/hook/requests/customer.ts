@@ -685,8 +685,9 @@ export type ResultUseCustomer = {
   totalPaidCustomer: number;
   totalUnpaidCustomer: number;
   setTabFilter: Dispatch<SetStateAction<"UNPAID" | "PAID" | "ALL">>;
+  setSearchFilter: Dispatch<SetStateAction<string>>;
   syncAllCustomers(): Promise<void>;
-  reqAllCustomers(): Promise<void>;
+  reqAllCustomers(resync: boolean): Promise<void>;
 };
 
 export const useCustomer = (): ResultUseCustomer => {
@@ -698,9 +699,21 @@ export const useCustomer = (): ResultUseCustomer => {
   const [tabFilter, setTabFilter] = useState<"UNPAID" | "PAID" | "ALL">(
     "UNPAID",
   );
+  const [searchFilter, setSearchFilter] = useState<string>("");
 
   const filteredCustomers = useMemo(() => {
     let dataFilter = customers;
+
+    dataFilter = dataFilter.filter(
+      (customer) =>
+        customer.namapelanggan
+          .toLowerCase()
+          .includes(searchFilter.toLowerCase()) ||
+        customer.nolayanan.includes(searchFilter) ||
+        customer.unpaid?.invoice
+          .toLowerCase()
+          .includes(searchFilter.toLowerCase()),
+    );
 
     if (tabFilter === "UNPAID") {
       dataFilter = dataFilter.filter((c) => !c.ispaid);
@@ -710,7 +723,7 @@ export const useCustomer = (): ResultUseCustomer => {
     }
 
     return dataFilter;
-  }, [customers, tabFilter]);
+  }, [customers, tabFilter, searchFilter]);
 
   return {
     customers: filteredCustomers,
@@ -718,6 +731,7 @@ export const useCustomer = (): ResultUseCustomer => {
     totalPaidCustomer,
     totalUnpaidCustomer,
     setTabFilter,
+    setSearchFilter,
     async syncAllCustomers() {},
     async reqAllCustomers(resync: boolean = false) {
       try {
@@ -809,18 +823,13 @@ export const useCustomer = (): ResultUseCustomer => {
             dtPaidCustomer.data.map((item) => [item.nolayanan, item]),
           );
 
-          const merged = allDataCustomers.map((cusItem) => {
-            const profile = profileMap.get(cusItem.pelanggan);
-            const unpaid = unpaidMap.get(cusItem.nolayanan);
-            const paid = paidMap.get(cusItem.nolayanan);
+          const merged: Array<Customer> = allDataCustomers.map((cusItem) => {
+            cusItem.profile = profileMap.get(cusItem.pelanggan);
+            cusItem.unpaid = unpaidMap.get(cusItem.nolayanan);
+            cusItem.ispaid = !cusItem.unpaid;
+            cusItem.paid = paidMap.get(cusItem.nolayanan);
 
-            return {
-              ...cusItem,
-              ispaid: !unpaid,
-              unpaid,
-              paid,
-              profile,
-            };
+            return cusItem;
           });
 
           setCustomers(merged);

@@ -1,51 +1,42 @@
 // PaymentPage.tsx
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonItem,
   IonLabel,
-  IonInput,
-  IonDatetime,
-  IonDatetimeButton,
-  IonModal,
   IonCard,
   IonCardContent,
   IonIcon,
   IonButton,
   IonText,
-  IonButtons,
-  IonBackButton,
 } from "@ionic/react";
-import {
-  receipt,
-  calendar,
-  cash,
-  checkmarkCircle,
-  arrowForward,
-  ellipsisVertical,
-} from "ionicons/icons";
-import { PickedFile } from "@capawesome/capacitor-file-picker";
+import { checkmarkCircle, arrowForward } from "ionicons/icons";
 import ImagePicker from "@/components/input/ImagePicker";
 import { useAppContext } from "@/context/app-context";
 import { Customer } from "@/types/customer";
 import { formatRupiah } from "@/utils/helpers";
 import SelectCustomer from "@/components/customer/SelectCustomer";
-import DateTimeInputText from "@/components/input/DateTimeInputText";
+import DateTimeInput from "@/components/input/DateTimeInput";
+import { format } from "date-fns";
+import BaseLayout from "@/components/layout/BaseLayout";
+import { Capacitor } from "@capacitor/core";
 
 const PaymentPage: React.FC = () => {
-  const { customer: uc } = useAppContext();
+  const { customer: uc, imageShare } = useAppContext();
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
-  const [invoiceNumber, setInvoiceNumber] = useState<string>("");
-  const [paymentDate, setPaymentDate] = useState<Date | null>(new Date());
-  const [totalPayment, setTotalPayment] = useState<string>("");
-  const [imageFile, setImageFile] = useState<PickedFile | null>(null);
+  const [paymentDate, setPaymentDate] = useState<string>(
+    format(new Date(), "yyyy-MM-dd HH:ii:ss"),
+  );
+  const [imagePaymentFile, setImagePaymentFile] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (imageShare?.imageFile) {
+      setImagePaymentFile(Capacitor.convertFileSrc(imageShare.imageFile.uri));
+      imageShare.setImageFile(null);
+    }
+  }, [imageShare]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -56,39 +47,22 @@ const PaymentPage: React.FC = () => {
         (customer) => customer.unpaid?.invoice == invoice,
       );
 
-      console.log({ selected, invoice });
       if (selected) setSelectedCustomer(selected);
     }
   }, [window.location, uc?.customers]);
 
   useEffect(() => {
     if (uc?.customers.length == 0) {
-      uc?.reqAllCustomers();
+      uc?.reqAllCustomers(false);
       uc?.setTabFilter("UNPAID");
     }
+    setPaymentDate(format(new Date(), "dd/MM/yyyy HH:ii:ss"));
   }, []);
 
   const handleSubmit = () => {};
 
   return (
-    <IonPage>
-      {/* Header */}
-      <IonHeader className="ion-no-border">
-        <IonToolbar className="bg-white">
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/customer" className="text-white" />
-          </IonButtons>
-          <IonTitle className="text-white font-bold text-lg">
-            Pembayaran
-          </IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={() => {}}>
-              <IonIcon icon={ellipsisVertical} className="text-gray-600" />
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
-
+    <BaseLayout headerTitle="Pembayaran" backHref="/customer">
       <IonContent fullscreen className="bg-gray-100 ion-padding">
         {/* Image View Section */}
         <IonCard className="rounded-xl shadow-sm mb-4 bg-white m-0">
@@ -98,9 +72,8 @@ const PaymentPage: React.FC = () => {
             </IonText>
 
             <ImagePicker
-              onChange={({ file }) => {
-                setImageFile(file);
-              }}
+              src={imagePaymentFile}
+              onChange={({ path }) => setImagePaymentFile(path)}
             />
           </IonCardContent>
         </IonCard>
@@ -113,10 +86,12 @@ const PaymentPage: React.FC = () => {
               <IonLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">
                 Tanggal & Waktu Pembayaran
               </IonLabel>
-              <DateTimeInputText
+              <DateTimeInput value={paymentDate} onChange={setPaymentDate} />
+
+              {/* <DateTimeInputText
                 value={paymentDate}
                 onChange={setPaymentDate}
-              />
+              /> */}
               {/* <IonItem
                 lines="none"
                 className="bg-gray-100 rounded-xl px-4 py-1"
@@ -216,8 +191,8 @@ const PaymentPage: React.FC = () => {
           expand="block"
           size="large"
           onClick={handleSubmit}
-          disabled={!selectedCustomer || !invoiceNumber || !totalPayment}
-          className={`rounded-2xl mt-2 h-14 font-bold text-base tracking-wide shadow-xl shadow-blue-500/30 ${!selectedCustomer || !invoiceNumber || !totalPayment ? "opacity-50" : "hover:shadow-2xl hover:shadow-blue-500/40 transform hover:-translate-y-0.5 transition-all"}`}
+          disabled={!selectedCustomer}
+          className={`rounded-2xl mt-2 h-14 font-bold text-base tracking-wide shadow-xl shadow-blue-500/30 ${!selectedCustomer ? "opacity-50" : "hover:shadow-2xl hover:shadow-blue-500/40 transform hover:-translate-y-0.5 transition-all"}`}
         >
           <IonIcon icon={checkmarkCircle} slot="start" className="mr-2" />
           Simpan Pembayaran
@@ -225,7 +200,7 @@ const PaymentPage: React.FC = () => {
         </IonButton>
 
         {/* Summary Card */}
-        {(selectedCustomer || invoiceNumber || totalPayment) && (
+        {selectedCustomer && (
           <IonCard className="rounded-2xl shadow-lg my-4 bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 m-0 overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-200 rounded-full -mr-16 -mt-16 opacity-50" />
             <IonCardContent className="p-5 relative">
@@ -309,7 +284,7 @@ const PaymentPage: React.FC = () => {
           --border-radius: 24px 24px 0 0;
         }
       `}</style>
-    </IonPage>
+    </BaseLayout>
   );
 };
 

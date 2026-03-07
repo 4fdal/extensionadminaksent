@@ -1,4 +1,5 @@
 import DetailCardCustomer from "@/components/customer/DetailCardCustomer";
+import BaseLayout from "@/components/layout/BaseLayout";
 import DataList from "@/components/list/DataList";
 import HeaderFilterChipToolbar, {
   Tab,
@@ -7,19 +8,15 @@ import TextSearchToolbar from "@/components/toolbars/TextSearch";
 import { useAppContext } from "@/context/app-context";
 import { Customer } from "@/types/customer";
 import {
+  IonActionSheet,
   IonButton,
   IonButtons,
   IonContent,
-  IonHeader,
   IonIcon,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
-  IonLoading,
-  IonPage,
-  IonTitle,
-  IonToolbar,
 } from "@ionic/react";
-import { ellipsisVertical } from "ionicons/icons";
+import { ellipsisVertical, refreshCircle } from "ionicons/icons";
 import React, { useEffect, useState } from "react";
 
 type DataItemRenderProp = {
@@ -134,6 +131,7 @@ const DataItemRender: React.FC<DataItemRenderProp> = (props) => {
 
 const CustomerPage: React.FC = () => {
   const [isPageLoaded, hasPageLoaded] = useState<boolean>(false);
+  const [showActionSheet, setShowActionSheet] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [tabFilter, setTabFilter] = useState<Tab | null>(null);
   const { customer: uc } = useAppContext();
@@ -142,67 +140,84 @@ const CustomerPage: React.FC = () => {
     (async () => {
       setLoading(true);
       if (!isPageLoaded) {
-        await uc?.reqAllCustomers();
+        await uc?.reqAllCustomers(false);
         hasPageLoaded(true);
       }
       setLoading(false);
     })();
   }, [isPageLoaded, uc]);
 
+  const handleSyncCustomer = async () => {
+    setLoading(true);
+    setShowActionSheet(false);
+    await uc?.reqAllCustomers(true);
+    setLoading(false);
+  };
+
   return (
-    <IonPage className="bg-gray-50">
-      <IonLoading isOpen={false} message="Memproses..." />
+    <BaseLayout
+      headerTitle="Berlangganan"
+      headerRender={
+        <>
+          {/* Search Bar */}
+          <TextSearchToolbar onChange={searchText => uc?.setSearchFilter(searchText) } />
 
-      {/* Header */}
-      <IonHeader className="ion-no-border shadow-sm">
-        <IonToolbar className="bg-white">
-          <IonTitle className="text-white font-bold text-lg mx-5">
-            Berlangganan
-          </IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={() => {}}>
-              <IonIcon icon={ellipsisVertical} className="text-gray-600" />
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
+          {/* Status Filter Chips */}
+          <HeaderFilterChipToolbar
+            onChange={(tab) => {
+              uc?.setTabFilter(tab.key);
+              setTabFilter(tab);
+            }}
+            tabs={[
+              {
+                key: "UNPAID",
+                label: "Unpaid",
+                count: uc?.totalUnpaidCustomer ?? 0,
+              },
+              {
+                key: "PAID",
+                label: "Paid",
+                count: uc?.totalPaidCustomer ?? 0,
+              },
+              {
+                key: "ALL",
+                label: "Semua",
+                count: uc?.totalCustomer ?? 0,
+              },
+            ]}
+          />
+        </>
+      }
+      headerToolbarEndRender={
+        <IonButtons slot="end">
+          <IonButton onClick={() => setShowActionSheet(true)}>
+            <IonIcon icon={ellipsisVertical} className="text-gray-600" />
+          </IonButton>
+          <IonActionSheet
+            isOpen={showActionSheet}
+            onDidDismiss={() => setShowActionSheet(false)}
+            buttons={[
+              {
+                text: "Synchronize",
+                icon: refreshCircle,
+                handler: handleSyncCustomer,
+              },
 
-        {/* Search Bar */}
-        <TextSearchToolbar />
-
-        {/* Status Filter Chips */}
-        <HeaderFilterChipToolbar
-          onChange={(tab) => {
-            uc?.setTabFilter(tab.key);
-            setTabFilter(tab);
-          }}
-          tabs={[
-            {
-              key: "UNPAID",
-              label: "Unpaid",
-              count: uc?.totalUnpaidCustomer ?? 0,
-            },
-            {
-              key: "PAID",
-              label: "Paid",
-              count: uc?.totalPaidCustomer ?? 0,
-            },
-            {
-              key: "ALL",
-              label: "Semua",
-              count: uc?.totalCustomer ?? 0,
-            },
-          ]}
-        />
-
-        {/* Sort & Filter Bar */}
-      </IonHeader>
-
+              {
+                text: "Batal",
+                role: "cancel",
+              },
+            ]}
+          />
+        </IonButtons>
+      }
+    >
       <IonContent>
         <DataList loading={loading} dataNotFound={uc?.totalCustomer == 0}>
           <DataItemRender data={uc?.customers ?? []} tab={tabFilter} />
         </DataList>
       </IonContent>
-    </IonPage>
+    </BaseLayout>
   );
 };
 
