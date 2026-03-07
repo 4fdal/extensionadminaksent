@@ -25,3 +25,23 @@ export const getDaysUntilDue = (dueDate: string) => {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays;
 };
+
+export const timeConvertToString = (date: Date): string => {
+  const HH = String(date.getHours()).padStart(2, "0");
+  const mm = String(date.getMinutes()).padStart(2, "0");
+  const ss = String(date.getSeconds()).padStart(2, "0");
+
+  return `${HH}:${mm}:${ss}`;
+};
+
+export const dateConvertToString = (date: Date): string => {
+  const yyyy = String(date.getFullYear()).padStart(4, "0");
+  const MM = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+
+  return `${yyyy}-${MM}-${dd}`;
+};
+
+export const dateTimeConvertToString = (date: Date, time: Date): string => {
+  return `${dateConvertToString(date)} ${timeConvertToString(time)}`;
+};

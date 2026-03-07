@@ -1,5 +1,10 @@
 import { Customer } from "@/types/customer";
-import { formatDate, formatRupiah } from "@/utils/helpers";
+import {
+  dateConvertToString,
+  dateTimeConvertToString,
+  formatDate,
+  formatRupiah,
+} from "@/utils/helpers";
 import { IonIcon } from "@ionic/react";
 import {
   alertCircleOutline,
@@ -73,21 +78,21 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
       </div> */}
 
       {/* More Options */}
-      <button
+      {/* <button
         onClick={(e) => {
           e.stopPropagation();
         }}
         className="absolute top-3 right-3 z-10 p-1 hover:bg-gray-100 rounded-lg transition-colors"
       >
         <IonIcon icon={ellipsisVertical} className="text-gray-400 text-lg" />
-      </button>
+      </button> */}
 
       {/* Card Header - Status & Invoice */}
       <div
         className={`px-4 pt-3 pb-2 border-b cursor-pointer`}
         onClick={() => {}}
       >
-        <div className="flex items-center justify-between pl-2 pr-16">
+        <div className="flex items-center justify-between pl-2 pr-2">
           <div className="flex items-center gap-2">
             {/* <span className={`w-2 h-2 rounded-full`}></span> */}
             <span
@@ -99,6 +104,17 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
             <span className="text-xs font-mono font-semibold text-gray-600">
               {props.customer?.unpaid?.invoice ?? props.customer?.paid?.invoice}
             </span>
+            {props.customer?.payment && (
+              <div className="flex flex-row gap-2">
+                <span className="text-gray-300">|</span>
+                <span className="text-xs font-mono font-semibold text-gray-600 flex-1">
+                  {dateTimeConvertToString(
+                    new Date(props.customer?.payment.tanggalbayar),
+                    new Date(props.customer?.payment.waktubayar),
+                  )}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

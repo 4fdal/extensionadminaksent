@@ -8,20 +8,46 @@ import {
   IonIcon,
   IonButton,
   IonText,
+  IonModal,
+  IonBackdrop,
+  IonLoading,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonImg,
 } from "@ionic/react";
-import { checkmarkCircle, arrowForward } from "ionicons/icons";
+import { checkmarkCircle, arrowForward, warningOutline } from "ionicons/icons";
 import ImagePicker from "@/components/input/ImagePicker";
 import { useAppContext } from "@/context/app-context";
 import { Customer } from "@/types/customer";
-import { formatRupiah } from "@/utils/helpers";
+import {
+  dateConvertToString,
+  formatRupiah,
+  timeConvertToString,
+} from "@/utils/helpers";
 import SelectCustomer from "@/components/customer/SelectCustomer";
 import DateTimeInput from "@/components/input/DateTimeInput";
 import { format } from "date-fns";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { Capacitor } from "@capacitor/core";
+import { Dialog } from "@capacitor/dialog";
+import {
+  HttpPaymentApi,
+  HttpPaymentRlradius,
+  Payment,
+  PaymentList,
+} from "@/utils/payment";
+import { useHistory } from "react-router";
+import DetailCardCustomer from "@/components/customer/DetailCardCustomer";
 
 const PaymentPage: React.FC = () => {
+  const history = useHistory();
   const { customer: uc, imageShare } = useAppContext();
+
+  const [paymentList, setPaymentList] = useState<Array<Payment> | null>(null);
+  const [paymentExits, setPaymentExits] = useState<Array<Payment>>([]);
+  const [loadingRequest, setLoadingRequest] = useState<boolean>(false);
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
@@ -29,11 +55,17 @@ const PaymentPage: React.FC = () => {
   const [paymentDate, setPaymentDate] = useState<string>(
     format(new Date(), "yyyy-MM-dd HH:ii:ss"),
   );
-  const [imagePaymentFile, setImagePaymentFile] = useState<string | null>(null);
+  const [imagePaymentSource, setImagePaymentSource] = useState<string | null>(
+    null,
+  );
+
+  const [modalPaymentExits, setModalPaymentExits] = useState<boolean>(false);
+  const [modalDataPaymentExits, setModalDataPaymentExits] =
+    useState<Customer | null>(null);
 
   useEffect(() => {
     if (imageShare?.imageFile) {
-      setImagePaymentFile(Capacitor.convertFileSrc(imageShare.imageFile.uri));
+      setImagePaymentSource(Capacitor.convertFileSrc(imageShare.imageFile.uri));
       imageShare.setImageFile(null);
     }
   }, [imageShare]);
@@ -52,17 +84,105 @@ const PaymentPage: React.FC = () => {
   }, [window.location, uc?.customers]);
 
   useEffect(() => {
-    if (uc?.customers.length == 0) {
-      uc?.reqAllCustomers(false);
-      uc?.setTabFilter("UNPAID");
-    }
+    (async () => {
+      if (uc?.customers.length == 0) {
+        try {
+          await uc?.reqAllCustomers(false);
+          uc?.setTabFilter("UNPAID");
+        } catch (error) {
+          console.error("[error] uc : ", error);
+        }
+      }
+
+      if (paymentList == null) {
+        try {
+          const payments = await HttpPaymentApi.getAll();
+          setPaymentList(payments);
+        } catch (error) {
+          console.error("[error] HttpPaymentApi.getAll : ", error);
+        }
+      }
+    })();
     setPaymentDate(format(new Date(), "dd/MM/yyyy HH:ii:ss"));
   }, []);
 
-  const handleSubmit = () => {};
+  const handlePaymentSubmit = async () => {
+    const splitStrDateTime = paymentDate.split(" ");
+    const datePayment = splitStrDateTime?.[0];
+    const timePayment = splitStrDateTime?.[1];
+
+    if (selectedCustomer && imagePaymentSource) {
+      const { value } = await Dialog.confirm({
+        title: `Pembayaran ${selectedCustomer?.namapelanggan}`,
+        message: `Apakah anda yakin ingin menyelesaikan pembayaran ini ? `,
+      });
+
+      if (value && selectedCustomer.unpaid) {
+        setLoadingRequest(true);
+        try {
+          const res = await HttpPaymentRlradius.setLunas(
+            selectedCustomer.unpaid?.invoice,
+          );
+          if (!res?.success) return;
+
+          await HttpPaymentApi.create({
+            id: undefined,
+            nolayanan: selectedCustomer?.nolayanan,
+            namapelanggan: selectedCustomer?.namapelanggan,
+            total: Number(selectedCustomer?.unpaid?.total),
+            invoice: String(res?.invoice),
+            tanggalbayar: datePayment,
+            waktubayar: timePayment,
+            gambar: imagePaymentSource,
+            created_at: undefined,
+            updated_at: undefined,
+          });
+
+          await uc?.reqAllCustomers(true);
+
+          setImagePaymentSource(null);
+          setSelectedCustomer(null);
+
+          history.replace("/customer");
+        } catch (error) {
+          console.error("[error] handlePaymentSubmit : ", { error });
+        }
+        setLoadingRequest(false);
+      }
+    }
+  };
+
+  const handleChangeDateTimeInput = (strDateTime: string) => {
+    setPaymentDate(strDateTime);
+
+    const currPaymentExits: Array<Payment> | undefined = paymentList?.filter(
+      (item) => {
+        const itemDateTime = `${dateConvertToString(new Date(item.tanggalbayar))} ${timeConvertToString(new Date(item.waktubayar))}`;
+        return strDateTime == itemDateTime;
+      },
+    );
+
+    if (currPaymentExits) setPaymentExits(currPaymentExits);
+  };
+
+  const handleClickPaymentExitsItem = (item: Payment) => {
+    const customer = uc?.customers.find(
+      (custItem) => custItem.nolayanan == item.nolayanan,
+    );
+
+    if (customer) {
+      customer.payment = item;
+      setModalDataPaymentExits(customer);
+      setModalPaymentExits(true);
+    }
+  };
 
   return (
-    <BaseLayout headerTitle="Pembayaran" backHref="/customer">
+    <BaseLayout
+      loadingPage={loadingRequest}
+      headerTitle="Pembayaran"
+      backHref="/customer"
+    >
       <IonContent fullscreen className="bg-gray-100 ion-padding">
         {/* Image View Section */}
         <IonCard className="rounded-xl shadow-sm mb-4 bg-white m-0">
@@ -72,8 +192,8 @@ const PaymentPage: React.FC = () => {
             </IonText>
 
             <ImagePicker
-              src={imagePaymentFile}
-              onChange={({ path }) => setImagePaymentFile(path)}
+              src={imagePaymentSource}
+              onChange={({ path }) => setImagePaymentSource(path)}
             />
           </IonCardContent>
         </IonCard>
@@ -86,7 +206,75 @@ const PaymentPage: React.FC = () => {
               <IonLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">
                 Tanggal & Waktu Pembayaran
               </IonLabel>
-              <DateTimeInput value={paymentDate} onChange={setPaymentDate} />
+              <DateTimeInput
+                value={paymentDate}
+                onChange={handleChangeDateTimeInput}
+              />
+              {paymentExits.length > 0 && (
+                <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200 flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                    <IonIcon
+                      icon={warningOutline}
+                      className="text-orange-600 text-xl"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-orange-800 text-sm">
+                      Waktu Pembayaran
+                    </h4>
+                    <div className="flex flex-col">
+                      {paymentExits.map((item) => {
+                        return (
+                          <span
+                            key={item.invoice}
+                            onClick={() => handleClickPaymentExitsItem(item)}
+                            className="text-red-600 font-bold"
+                          >
+                            {item.nolayanan} / {item.namapelanggan}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <p className="text-orage-500 text-xs mt-0.5">
+                      Telah terpantau ada pelanggan yang melakukan pembayaran
+                      pada waktu yang sama
+                    </p>
+                    <IonModal isOpen={modalPaymentExits}>
+                      <IonHeader>
+                        <IonToolbar>
+                          <IonTitle style={{ "margin-left": "10px" }}>
+                            {modalDataPaymentExits?.namapelanggan}
+                          </IonTitle>
+                          <IonButtons slot="end">
+                            <IonButton
+                              onClick={() => setModalPaymentExits(false)}
+                            >
+                              Close
+                            </IonButton>
+                          </IonButtons>
+                        </IonToolbar>
+                      </IonHeader>
+                      <IonContent className="ion-padding flex flex-col gap-2">
+                        <div
+                          className="relative bg-white rounded-2xl shadow-sm border-2 transition-all duration-200 overflow-hidden border-transparent hover:border-gray-200"
+                          style={{ animationDelay: `${1 * 50}ms` }}
+                        >
+                          <IonImg
+                            src={modalDataPaymentExits?.payment?.gambar}
+                          />
+                        </div>
+                        <div className="mt-3 mb-20">
+                          {modalDataPaymentExits && (
+                            <DetailCardCustomer
+                              customer={modalDataPaymentExits}
+                            />
+                          )}
+                        </div>
+                      </IonContent>
+                    </IonModal>
+                  </div>
+                </div>
+              )}
 
               {/* <DateTimeInputText
                 value={paymentDate}
@@ -190,8 +378,8 @@ const PaymentPage: React.FC = () => {
         <IonButton
           expand="block"
           size="large"
-          onClick={handleSubmit}
-          disabled={!selectedCustomer}
+          onClick={handlePaymentSubmit}
+          disabled={!selectedCustomer || !imagePaymentSource || !paymentDate}
           className={`rounded-2xl mt-2 h-14 font-bold text-base tracking-wide shadow-xl shadow-blue-500/30 ${!selectedCustomer ? "opacity-50" : "hover:shadow-2xl hover:shadow-blue-500/40 transform hover:-translate-y-0.5 transition-all"}`}
         >
           <IonIcon icon={checkmarkCircle} slot="start" className="mr-2" />

@@ -46,10 +46,8 @@ const ImagePicker: React.FC<ImagePickerProp> = (props) => {
   };
 
   useEffect(() => {
-    if (imageScr == null && props.src) setImageSrc(props.src);
+    if (imageScr == null) setImageSrc(props.src);
   }, [props.src]);
-
-  console.log({ imageScr });
 
   return (
     <div className="">

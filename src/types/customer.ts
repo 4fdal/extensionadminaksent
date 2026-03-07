@@ -83,18 +83,19 @@ export type UnpaidCustomerItem = {
 };
 
 export type PaymentCustomer = {
-  id: string | null;
+  id?: string | null;
   nolayanan: string;
+  namapelanggan: string;
   invoice: string;
+  total: number;
   tanggalbayar: string;
   waktubayar: string;
   gambar: string;
-  create_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export type Customer = {
-  [x: string]: string | null;
   nolayanan: string;
   pelanggan: string;
   namapelanggan: string;
@@ -125,40 +126,40 @@ export type Customer = {
   ispaid: boolean;
   paid?: PaidCustomerItem;
   unpaid?: UnpaidCustomerItem;
-  paymenthistory?: PaymentCustomer;
+  payment?: PaymentCustomer;
   profile?: ProfileCustomerItem;
 };
 
 // Interface untuk data pelanggan
-export type UnpaidCustomer = {
-  id: string;
-  status: "BELUM" | "PROSES" | "PENDING";
-  invoice: string;
-  nolayanan: string;
-  pelanggan: string;
-  email: string;
-  telepon: string;
-  alamat: string;
-  profile: "REGULER" | "VIP" | "CORPORATE";
-  mitra: string;
-  kategori: "INTERNET" | "TV" | "VOICE" | "BUNDLE";
-  tglTerbit: string;
-  jthTempo: string;
-  subtotal: number;
-  diskon: number;
-  ppn: number;
-  kode: string;
-  total: number;
-  note: string;
-  tagih: boolean;
-  history: PaymentHistory[];
-  isFavorite: boolean;
-};
+// export type UnpaidCustomer = {
+//   id: string;
+//   status: "BELUM" | "PROSES" | "PENDING";
+//   invoice: string;
+//   nolayanan: string;
+//   pelanggan: string;
+//   email: string;
+//   telepon: string;
+//   alamat: string;
+//   profile: "REGULER" | "VIP" | "CORPORATE";
+//   mitra: string;
+//   kategori: "INTERNET" | "TV" | "VOICE" | "BUNDLE";
+//   tglTerbit: string;
+//   jthTempo: string;
+//   subtotal: number;
+//   diskon: number;
+//   ppn: number;
+//   kode: string;
+//   total: number;
+//   note: string;
+//   tagih: boolean;
+//   history: PaymentHistory[];
+//   isFavorite: boolean;
+// };
 
-export type PaymentHistory = {
-  id: string;
-  date: string;
-  amount: number;
-  method: string;
-  status: string;
-};
+// export type PaymentHistory = {
+//   id: string;
+//   date: string;
+//   amount: number;
+//   method: string;
+//   status: string;
+// };

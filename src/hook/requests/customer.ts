@@ -3,11 +3,14 @@ import {
   DataTableResponse,
   HomeCustomer,
   PaidCustomerItem,
+  PaymentCustomer,
   ProfileCustomerItem,
   RequestCustomerParams,
   UnpaidCustomerItem,
 } from "@/types/customer";
 import { getCookieTungkaLilirAdmin } from "@/utils/cookie";
+import { dateTimeConvertToString } from "@/utils/helpers";
+import { HttpPaymentApi } from "@/utils/payment";
 import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
@@ -742,6 +745,7 @@ export const useCustomer = (): ResultUseCustomer => {
           (check?.expired ?? 0) + (check.totallanggananonline ?? 0);
 
         let allDataCustomers: Array<Customer> = [];
+        let allDataCustomerPayments: Array<PaymentCustomer> = [];
         let dtUnpaidCustomer: DataTableResponse<UnpaidCustomerItem> | null =
           null;
         let dtProfileCustomer: DataTableResponse<ProfileCustomerItem> | null =
@@ -759,6 +763,19 @@ export const useCustomer = (): ResultUseCustomer => {
           await Preferences.set({
             key: "allDataCustomers",
             value: JSON.stringify(allDataCustomers),
+          });
+        }
+
+        pref = await Preferences.get({
+          key: "allDataCustomerPayments",
+        });
+        if (pref.value && !resync) {
+          allDataCustomerPayments = JSON.parse(pref.value);
+        } else {
+          allDataCustomerPayments = await HttpPaymentApi.getAll();
+          await Preferences.set({
+            key: "allDataCustomerPayments",
+            value: JSON.stringify(allDataCustomerPayments),
           });
         }
 
@@ -801,10 +818,6 @@ export const useCustomer = (): ResultUseCustomer => {
           });
         }
 
-        setTotalCustomer(allDataCustomers.length);
-        setTotalPaidCustomer(dtPaidCustomer?.data.length ?? 0);
-        setTotalUnpaidCustomer(dtUnpaidCustomer?.data.length ?? 0);
-
         if (
           allDataCustomers.length > 0 &&
           dtProfileCustomer &&
@@ -823,16 +836,60 @@ export const useCustomer = (): ResultUseCustomer => {
             dtPaidCustomer.data.map((item) => [item.nolayanan, item]),
           );
 
-          const merged: Array<Customer> = allDataCustomers.map((cusItem) => {
-            cusItem.profile = profileMap.get(cusItem.pelanggan);
-            cusItem.unpaid = unpaidMap.get(cusItem.nolayanan);
-            cusItem.ispaid = !cusItem.unpaid;
-            cusItem.paid = paidMap.get(cusItem.nolayanan);
+          const paymentMap = new Map(
+            allDataCustomerPayments.map((item) => [
+              item.nolayanan.toString(),
+              item,
+            ]),
+          );
 
-            return cusItem;
-          });
+          console.log({ paymentMap, allDataCustomerPayments });
+
+          let countAllData = 0;
+          let countPaidCustomer = 0;
+          let countUnpaidCustomer = 0;
+          const merged: Array<Customer> = allDataCustomers
+            .map((cusItem) => {
+              cusItem.profile = profileMap.get(cusItem.pelanggan);
+              cusItem.unpaid = unpaidMap.get(cusItem.nolayanan);
+              cusItem.ispaid = !cusItem.unpaid;
+              cusItem.paid = paidMap.get(cusItem.nolayanan);
+              cusItem.payment = paymentMap.get(cusItem.nolayanan);
+
+              console.log(cusItem.payment, cusItem.nolayanan);
+
+              countAllData += 1;
+              if (cusItem.ispaid) countPaidCustomer += 1;
+              else countUnpaidCustomer += 1;
+
+              return cusItem;
+            })
+            .sort((a, b) => {
+              if (!a.payment && !b.payment) return 0;
+              if (!a.payment) return 1;
+              if (!b.payment) return -1;
+
+              const aDateTime = new Date(
+                dateTimeConvertToString(
+                  new Date(a.payment.tanggalbayar),
+                  new Date(a.payment.waktubayar),
+                ),
+              );
+
+              const bDateTime = new Date(
+                dateTimeConvertToString(
+                  new Date(b.payment.tanggalbayar),
+                  new Date(b.payment.waktubayar),
+                ),
+              );
+
+              return bDateTime.getTime() - aDateTime.getTime();
+            });
 
           setCustomers(merged);
+          setTotalCustomer(countAllData);
+          setTotalPaidCustomer(countPaidCustomer);
+          setTotalUnpaidCustomer(countUnpaidCustomer);
         }
       } catch (error) {
         console.error("[Error] reqAllCustomers: ", error);
