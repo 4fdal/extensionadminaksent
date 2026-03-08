@@ -1,6 +1,5 @@
 import { Customer } from "@/types/customer";
 import {
-  dateConvertToString,
   dateTimeConvertToString,
   formatDate,
   formatRupiah,
@@ -12,7 +11,6 @@ import {
   calendarOutline,
   callOutline,
   cashOutline,
-  ellipsisVertical,
   eyeOutline,
   homeOutline,
   personOutline,
@@ -22,9 +20,11 @@ import React from "react";
 import { differenceInDays } from "date-fns";
 import { useHistory } from "react-router";
 import { AppLauncher } from "@capacitor/app-launcher";
+import { sendBilToWhatsapp } from "@/utils/payment";
 
 type DetailCardCustomerProp = {
   customer?: Customer;
+  onClickDetail?: () => void | undefined;
 };
 
 const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
@@ -92,7 +92,7 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
         className={`px-4 pt-3 pb-2 border-b cursor-pointer`}
         onClick={() => {}}
       >
-        <div className="flex items-center justify-between pl-2 pr-2">
+        <div className="flex items-center justify-between pl-2 pr-1">
           <div className="flex items-center gap-2">
             {/* <span className={`w-2 h-2 rounded-full`}></span> */}
             <span
@@ -105,14 +105,34 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
               {props.customer?.unpaid?.invoice ?? props.customer?.paid?.invoice}
             </span>
             {props.customer?.payment && (
-              <div className="flex flex-row gap-2">
+              <>
                 <span className="text-gray-300">|</span>
-                <span className="text-xs font-mono font-semibold text-gray-600 flex-1">
+                <span className="text-xs font-mono font-semibold  flex-1 bg-green-100 text-green-800 px-2 rounded-4xl">
                   {dateTimeConvertToString(
                     new Date(props.customer?.payment.tanggalbayar),
                     new Date(props.customer?.payment.waktubayar),
                   )}
                 </span>
+              </>
+            )}
+            {!props.customer?.payment && props.customer?.paid && (
+              <>
+                <button
+                  onClick={() => {
+                    history.push(
+                      "/payment?invoice=" + props.customer?.paid?.invoice,
+                    );
+                  }}
+                >
+                  <div className="text-xs bg-orange-100 px-2 rounded-2xl text-orange-800 hover:bg-orange-200 active:bg-orange-200 ">
+                    Sync Pembayaran
+                  </div>
+                </button>
+              </>
+            )}
+            {!props.customer?.paid && !props.customer?.unpaid && (
+              <div className="text-xs bg-black text-white rounded-4xl px-2 font-bold ">
+                Pelanggan Baru
               </div>
             )}
           </div>
@@ -140,7 +160,12 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
                 {props.customer?.nolayanan}
               </span>
               {!props.customer?.ispaid && (
-                <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded animate-pulse">
+                <span
+                  onClick={() => {
+                    if (props.customer) sendBilToWhatsapp(props.customer);
+                  }}
+                  className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded animate-pulse"
+                >
                   TAGIH
                 </span>
               )}
@@ -285,10 +310,11 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
           <IonIcon icon={cashOutline} className="text-sm" />
           Bayar
         </button> */}
-        {props.customer?.ispaid && (
+        {props.customer?.paid && (
           <button
             onClick={(e) => {
               e.stopPropagation();
+              if (props.onClickDetail) props.onClickDetail();
             }}
           >
             <span className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">

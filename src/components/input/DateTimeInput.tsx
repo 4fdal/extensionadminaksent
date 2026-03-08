@@ -33,10 +33,8 @@ const DateTimeInput: React.FC<DateTimeInputProp> = ({
   }, [value]);
 
   useEffect(() => {
-    if (currentDate && currentTime) {
-      const currentValue = `${currentDate} ${currentTime}`;
-      if (currentValue != value) onChange(currentValue);
-    }
+    const currentValue = `${currentDate} ${currentTime}`;
+    if (currentValue != value) onChange(currentValue);
   }, [currentDate, currentTime]);
 
   const handleChangeTime: React.ChangeEventHandler<HTMLInputElement> = (e) => {

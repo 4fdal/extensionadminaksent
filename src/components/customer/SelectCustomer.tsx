@@ -107,7 +107,8 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
   useEffect(() => {
     if (
       props.selected != null &&
-      props.selected?.unpaid?.invoice != selectedCustomer?.unpaid?.invoice
+      (props.selected?.unpaid ?? props.selected?.paid)?.invoice !=
+        (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice
     )
       setSelectedCustomer(props.selected);
   }, [props.selected]);
@@ -115,7 +116,8 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
   useEffect(() => {
     if (
       props.onChange &&
-      props.selected?.unpaid?.invoice != selectedCustomer?.unpaid?.invoice
+      (props.selected?.unpaid ?? props.selected?.paid)?.invoice !=
+        (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice
     )
       props.onChange(selectedCustomer);
   }, [selectedCustomer]);
@@ -434,7 +436,7 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
                 Pelanggan Terpilih
               </h4>
               <p className="text-green-600 text-xs mt-1">
-                {selectedCustomer.unpaid?.invoice} •{" "}
+                {(selectedCustomer.unpaid ?? selectedCustomer.paid)?.invoice} •{" "}
                 {selectedCustomer.namapelanggan} •{" "}
                 {selectedCustomer.namaprofile}
               </p>

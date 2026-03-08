@@ -1,4 +1,5 @@
 import DetailCardCustomer from "@/components/customer/DetailCardCustomer";
+import PaymentDetailCustomer from "@/components/customer/PaymentDetailCustomer";
 import BaseLayout from "@/components/layout/BaseLayout";
 import DataList from "@/components/list/DataList";
 import HeaderFilterChipToolbar, {
@@ -15,14 +16,17 @@ import {
   IonIcon,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
+  IonModal,
 } from "@ionic/react";
-import { ellipsisVertical, refreshCircle } from "ionicons/icons";
+import { close, ellipsisVertical, refreshCircle, search } from "ionicons/icons";
 import React, { useEffect, useState } from "react";
+import { useHistory } from "react-router";
 
 type DataItemRenderProp = {
   children?: React.ReactNode;
   data: Array<Customer>;
   tab?: Tab | null;
+  onClickDetail?: (cust: Customer) => void;
 };
 
 // function DetailCardCustomerRow(
@@ -78,7 +82,12 @@ const DataItemRender: React.FC<DataItemRenderProp> = (props) => {
         <div>
           {customerItems.map((item) => (
             <div key={item.nolayanan} className="mb-2">
-              <DetailCardCustomer customer={item} />
+              <DetailCardCustomer
+                customer={item}
+                onClickDetail={() => {
+                  if (props.onClickDetail) props.onClickDetail(item);
+                }}
+              />
             </div>
           ))}
         </div>
@@ -130,17 +139,21 @@ const DataItemRender: React.FC<DataItemRenderProp> = (props) => {
 };
 
 const CustomerPage: React.FC = () => {
+  const history = useHistory();
+
   const [isPageLoaded, hasPageLoaded] = useState<boolean>(false);
   const [showActionSheet, setShowActionSheet] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [tabFilter, setTabFilter] = useState<Tab | null>(null);
   const { customer: uc } = useAppContext();
 
+  const [modalCustDetail, setModalCustDetail] = useState<Customer | null>(null);
+
   useEffect(() => {
     (async () => {
       setLoading(true);
       if (!isPageLoaded) {
-        await uc?.reqAllCustomers(false);
+        await uc?.reqAllCustomers(true);
         hasPageLoaded(true);
       }
       setLoading(false);
@@ -160,7 +173,9 @@ const CustomerPage: React.FC = () => {
       headerRender={
         <>
           {/* Search Bar */}
-          <TextSearchToolbar onChange={searchText => uc?.setSearchFilter(searchText) } />
+          <TextSearchToolbar
+            onChange={(searchText) => uc?.setSearchFilter(searchText)}
+          />
 
           {/* Status Filter Chips */}
           <HeaderFilterChipToolbar
@@ -214,8 +229,66 @@ const CustomerPage: React.FC = () => {
     >
       <IonContent>
         <DataList loading={loading} dataNotFound={uc?.totalCustomer == 0}>
-          <DataItemRender data={uc?.customers ?? []} tab={tabFilter} />
+          <DataItemRender
+            onClickDetail={(item) => setModalCustDetail(item)}
+            data={uc?.filteredCustomers ?? []}
+            tab={tabFilter}
+          />
         </DataList>
+
+        <IonModal
+          isOpen={modalCustDetail != null}
+          onDidDismiss={() => {
+            setModalCustDetail(null);
+          }}
+          breakpoints={[0, 0.5, 0.8, 1]}
+          initialBreakpoint={0.6}
+          handleBehavior="cycle"
+          className="customer-modal"
+        >
+          {modalCustDetail?.payment ? (
+            <div className="p-2 mt-2   flex flex-col gap-2 h-full">
+              <PaymentDetailCustomer data={modalCustDetail.payment} />
+              <IonButton
+                style={{
+                  "--border-radius": "20px",
+                }}
+                onClick={() => setModalCustDetail(null)}
+              >
+                Close
+              </IonButton>
+              <div className="mb-10"></div>
+            </div>
+          ) : (
+            <>
+              <div className="text-center p-12">
+                <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <IonIcon icon={search} className="text-4xl text-gray-400" />
+                </div>
+                <h3 className="text-gray-800 font-semibold text-lg mb-2">
+                  Tidak ada data pembayaran
+                </h3>
+                <p className="text-gray-500 text-sm">
+                  Coba lakukan proses sync pembayaran terlebih dahulu!
+                </p>
+                <IonButton
+                  className="mt-3"
+                  style={{
+                    "--border-radius": "20px",
+                  }}
+                  onClick={() => {
+                    history.push(
+                      "/payment?invoice=" + modalCustDetail?.paid?.invoice,
+                    );
+                    setModalCustDetail(null);
+                  }}
+                >
+                  Sync Pembayaran
+                </IonButton>
+              </div>
+            </>
+          )}
+        </IonModal>
       </IonContent>
     </BaseLayout>
   );

@@ -1,3 +1,4 @@
+
 // Format currency
 export const formatRupiah = (amount: number) => {
   return new Intl.NumberFormat("id-ID", {
@@ -45,3 +46,24 @@ export const dateConvertToString = (date: Date): string => {
 export const dateTimeConvertToString = (date: Date, time: Date): string => {
   return `${dateConvertToString(date)} ${timeConvertToString(time)}`;
 };
+
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+
+export const logError = async (error: { message: string; stack: string }) => {
+  const log = {
+    message: error.message,
+    stack: error.stack,
+    date: new Date().toISOString(),
+  };
+
+  console.error(log);
+
+  await Filesystem.appendFile({
+    path: "error-log.txt",
+    data: JSON.stringify(log) + "\n",
+    directory: Directory.Data,
+    encoding: Encoding.UTF8,
+  });
+  
+};
+

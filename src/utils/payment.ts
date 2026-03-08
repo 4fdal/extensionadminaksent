@@ -1,7 +1,8 @@
-import { PaymentCustomer } from "@/types/customer";
+import { Customer, PaymentCustomer } from "@/types/customer";
 import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 import { getCookieTungkaLilirAdmin } from "./cookie";
+import { AppLauncher } from "@capacitor/app-launcher";
 
 export const KEY_PAYMENT_PREFERENCE = "PAYMENT_HISTORY";
 
@@ -135,7 +136,7 @@ export class PaymentList {
 }
 
 export class HttpPaymentRlradius {
-  static baseURL = "https://tungkalilir.rlradius.app/csrf";
+  static baseURL = "https://tungkalilir.rlradius.app";
 
   static async getCSRF(): Promise<{ status: boolean; token: string } | null> {
     try {
@@ -148,7 +149,6 @@ export class HttpPaymentRlradius {
       const res = await CapacitorHttp.get({
         url: `${this.baseURL}/csrf`,
         headers: {
-          Accept: "application/json, text/javascript, */*; q=0.01",
           "X-Requested-With": "XMLHttpRequest",
           Cookie: cookie,
         },
@@ -188,25 +188,19 @@ export class HttpPaymentRlradius {
       formData.append("carabayar", "2");
       formData.append("rekening", "7975 0100 0814 504");
 
-      const res = await CapacitorHttp.post({
-        url: `${this.baseURL}/invoice/setlunas`,
+      const res = await fetch(`${this.baseURL}/invoice/setlunas`, {
+        method: "POST",
         headers: {
           Accept: "application/json, text/javascript, */*; q=0.01",
-          "Content-Type": "multipart/form-data; boundary=----",
           "X-Requested-With": "XMLHttpRequest",
           Cookie: cookie,
         },
-        dataType: "formData",
-        data: formData,
+        body: formData,
       });
 
-      if (res.status != 200) Promise.reject(res);
+      if (res.status != 200) return Promise.reject(res);
 
-      return res.status == 200
-        ? typeof res.data == "string"
-          ? JSON.parse(res.data)
-          : res.data
-        : null;
+      return await res.json();
     } catch (err) {
       return Promise.reject(err);
     }
@@ -221,6 +215,7 @@ export class HttpPaymentApi {
     try {
       const res = await CapacitorHttp.get({
         url: `${this.baseURL}?table=payment`,
+        responseType: "json",
       });
 
       if (res.status != 200) return Promise.reject({ res });
@@ -245,6 +240,7 @@ export class HttpPaymentApi {
             id: id,
           },
         },
+        responseType: "json",
       });
 
       if (res.status != 200) return Promise.reject({ res });
@@ -278,6 +274,7 @@ export class HttpPaymentApi {
             gambar: payment.gambar,
           },
         },
+        responseType: "json",
       });
 
       if (res.status != 200) return Promise.reject({ res });
@@ -313,6 +310,7 @@ export class HttpPaymentApi {
             gambar: payment.gambar,
           },
         },
+        responseType: "json",
       });
       if (res.status != 200) return Promise.reject({ res });
       if (res.headers["Content-Type"].search("application/json") == -1)
@@ -339,6 +337,7 @@ export class HttpPaymentApi {
             id: id,
           },
         },
+        responseType: "json",
       });
 
       if (res.status != 200) return Promise.reject({ res });
@@ -353,3 +352,60 @@ export class HttpPaymentApi {
     }
   }
 }
+
+export const sendBilToWhatsapp = async (cust: Customer) => {
+  let message = `Pelanggan yang terhormat,
+Berikut kami sampaikan tagihan anda bulan ini :
+
+Invoice : {invoice}
+Pelanggan : {nama_pelanggan}
+No.Layanan : {nolayanan}
+Profil Internet : {profile}
+
+Total Tagihan : *{total}*
+*Pembayaran paling lambat : {jatuh_tempo}*
+
+Silahkan klik link di bawah ini untuk melihat rincian invoice dan pembayaran :
+{link_invoice}
+
+Jika anda mengalami kesulitan dalam melakukan pembayaran silahkan hubungi kami kembali.
+Terima kasih`;
+
+  const date = new Date();
+  const month = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ][date.getMonth()];
+  const year = date.getFullYear() + 1;
+
+  message = message.replaceAll("{invoice}", String(cust.unpaid?.invoice));
+  message = message.replaceAll("{nama_pelanggan}", String(cust.namapelanggan));
+  message = message.replaceAll("{nolayanan}", String(cust.nolayanan));
+  message = message.replaceAll("{profile}", String(cust.namaprofile));
+  message = message.replaceAll(
+    "{total}",
+    Number(cust.unpaid?.total).toLocaleString("id-ID"),
+  );
+  message = message.replaceAll("{jatuh_tempo}", String(`10 ${month} ${year}`));
+  message = message.replaceAll(
+    "{link_invoice}",
+    String(
+      `https://tungkalilir.rlradius.app/i/${btoa(`${cust.unpaid?.invoice}${cust.profile?.phone}`)}`,
+    ),
+  );
+  message = encodeURIComponent(message);
+
+  await AppLauncher.openUrl({
+    url: `whatsapp://send?phone=62${cust?.profile?.phone.substring(1)}&text=${message}`,
+  });
+};

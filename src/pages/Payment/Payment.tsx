@@ -16,6 +16,7 @@ import {
   IonTitle,
   IonButtons,
   IonImg,
+  useIonToast,
 } from "@ionic/react";
 import { checkmarkCircle, arrowForward, warningOutline } from "ionicons/icons";
 import ImagePicker from "@/components/input/ImagePicker";
@@ -42,6 +43,7 @@ import { useHistory } from "react-router";
 import DetailCardCustomer from "@/components/customer/DetailCardCustomer";
 
 const PaymentPage: React.FC = () => {
+  const [present] = useIonToast();
   const history = useHistory();
   const { customer: uc, imageShare } = useAppContext();
 
@@ -76,7 +78,7 @@ const PaymentPage: React.FC = () => {
 
     if ((uc?.customers?.length ?? 0) > 0 && invoice) {
       const selected = uc?.customers.find(
-        (customer) => customer.unpaid?.invoice == invoice,
+        (customer) => (customer.unpaid ?? customer.paid)?.invoice == invoice,
       );
 
       if (selected) setSelectedCustomer(selected);
@@ -88,7 +90,6 @@ const PaymentPage: React.FC = () => {
       if (uc?.customers.length == 0) {
         try {
           await uc?.reqAllCustomers(false);
-          uc?.setTabFilter("UNPAID");
         } catch (error) {
           console.error("[error] uc : ", error);
         }
@@ -117,35 +118,68 @@ const PaymentPage: React.FC = () => {
         message: `Apakah anda yakin ingin menyelesaikan pembayaran ini ? `,
       });
 
-      if (value && selectedCustomer.unpaid) {
+      if (value) {
         setLoadingRequest(true);
         try {
-          const res = await HttpPaymentRlradius.setLunas(
-            selectedCustomer.unpaid?.invoice,
-          );
-          if (!res?.success) return;
+          if (selectedCustomer.unpaid) {
+            const resRlradiusPayment = await HttpPaymentRlradius.setLunas(
+              selectedCustomer.unpaid?.invoice,
+            );
 
-          await HttpPaymentApi.create({
-            id: undefined,
-            nolayanan: selectedCustomer?.nolayanan,
-            namapelanggan: selectedCustomer?.namapelanggan,
-            total: Number(selectedCustomer?.unpaid?.total),
-            invoice: String(res?.invoice),
-            tanggalbayar: datePayment,
-            waktubayar: timePayment,
-            gambar: imagePaymentSource,
-            created_at: undefined,
-            updated_at: undefined,
-          });
+            if (!resRlradiusPayment?.success) {
+              present({
+                message: `Rlradius, ${resRlradiusPayment?.pesan}`,
+                position: "bottom",
+                duration: 1500,
+                color: "danger",
+              });
+            }
+
+            console.log("MASUK SINI GAK")
+          }
+
+          if (!selectedCustomer.payment) {
+            const reqPayment: Payment = {
+              id: undefined,
+              nolayanan: selectedCustomer?.nolayanan,
+              namapelanggan: selectedCustomer?.namapelanggan,
+              total: Number(
+                (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.total,
+              ),
+              invoice: String(
+                (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice,
+              ),
+              tanggalbayar: datePayment,
+              waktubayar: timePayment,
+              gambar: imagePaymentSource,
+              created_at: undefined,
+              updated_at: undefined,
+            };
+
+            await HttpPaymentApi.create(reqPayment);
+          }
 
           await uc?.reqAllCustomers(true);
 
           setImagePaymentSource(null);
           setSelectedCustomer(null);
 
+          present({
+            message: "Berhasil melakukan pembayaran",
+            position: "bottom",
+            duration: 1500,
+            color: "primary",
+          });
+
           history.replace("/customer");
         } catch (error) {
           console.error("[error] handlePaymentSubmit : ", { error });
+          present({
+            message: "Ada sesuatu yang error!",
+            position: "bottom",
+            duration: 1500,
+            color: "danger",
+          });
         }
         setLoadingRequest(false);
       }
@@ -394,7 +428,9 @@ const PaymentPage: React.FC = () => {
             <IonCardContent className="p-5 relative">
               <IonText className="text-xs font-bold text-orange-600 uppercase tracking-wider block mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                Ringkasan Pembayaran
+                {!selectedCustomer?.ispaid
+                  ? "Ringkasan Pembayaran"
+                  : "Ringkasan Update Data Pembayaran"}
               </IonText>
               <div className="space-y-3">
                 {selectedCustomer?.unpaid?.invoice && (

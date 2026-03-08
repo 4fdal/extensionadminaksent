@@ -684,6 +684,8 @@ export const httpGetAllCustomer = async (): Promise<Array<Customer>> => {
 
 export type ResultUseCustomer = {
   customers: Customer[];
+  filteredCustomers: Customer[];
+  setCustomers: Dispatch<SetStateAction<Customer[]>>;
   totalCustomer: number;
   totalPaidCustomer: number;
   totalUnpaidCustomer: number;
@@ -729,7 +731,9 @@ export const useCustomer = (): ResultUseCustomer => {
   }, [customers, tabFilter, searchFilter]);
 
   return {
-    customers: filteredCustomers,
+    customers,
+    filteredCustomers,
+    setCustomers,
     totalCustomer,
     totalPaidCustomer,
     totalUnpaidCustomer,
@@ -843,8 +847,6 @@ export const useCustomer = (): ResultUseCustomer => {
             ]),
           );
 
-          console.log({ paymentMap, allDataCustomerPayments });
-
           let countAllData = 0;
           let countPaidCustomer = 0;
           let countUnpaidCustomer = 0;
@@ -855,8 +857,6 @@ export const useCustomer = (): ResultUseCustomer => {
               cusItem.ispaid = !cusItem.unpaid;
               cusItem.paid = paidMap.get(cusItem.nolayanan);
               cusItem.payment = paymentMap.get(cusItem.nolayanan);
-
-              console.log(cusItem.payment, cusItem.nolayanan);
 
               countAllData += 1;
               if (cusItem.ispaid) countPaidCustomer += 1;
