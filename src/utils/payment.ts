@@ -154,7 +154,10 @@ export class HttpPaymentRlradius {
         },
       });
 
-      if (res.status != 200) Promise.reject(res);
+      if (res.status != 200)
+        return Promise.reject(
+          new Error("Response not status 200 : " + JSON.stringify(res)),
+        );
 
       return res.status == 200
         ? typeof res.data == "string"
@@ -180,27 +183,80 @@ export class HttpPaymentRlradius {
         );
 
       const csrf = await this.getCSRF();
-      if (!csrf?.token) Promise.reject(csrf);
+      if (!csrf?.token)
+        Promise.reject(
+          new Error("Token csrf not found : " + JSON.stringify(csrf)),
+        );
 
-      const formData = new FormData();
-      if (csrf?.token) formData.append("_token", csrf?.token);
-      formData.append("invoice", invoice);
-      formData.append("carabayar", "2");
-      formData.append("rekening", "7975 0100 0814 504");
+      const body = new URLSearchParams({
+        _token: String(csrf?.token),
+        invoice: invoice,
+        carabayar: "2",
+        rekening: "7975 0100 0814 504",
+      }).toString();
 
-      const res = await fetch(`${this.baseURL}/invoice/setlunas`, {
-        method: "POST",
+      const res = await CapacitorHttp.post({
+        url: "https://tungkalilir.rlradius.app/invoice/setlunas",
         headers: {
-          Accept: "application/json, text/javascript, */*; q=0.01",
+          "Content-Type": "application/x-www-form-urlencoded",
           "X-Requested-With": "XMLHttpRequest",
           Cookie: cookie,
         },
-        body: formData,
+        data: body,
       });
 
-      if (res.status != 200) return Promise.reject(res);
+      if (res.status != 200)
+        return Promise.reject(
+          new Error("Response not status 200 : " + JSON.stringify(res)),
+        );
 
-      return await res.json();
+      return res.status == 200
+        ? typeof res.data == "string"
+          ? JSON.parse(res.data)
+          : res.data
+        : null;
+
+      // const formData = new FormData();
+      // if (csrf?.token) formData.append("_token", csrf?.token);
+      // formData.append("invoice", invoice);
+      // formData.append("carabayar", "2");
+      // formData.append("rekening", "7975 0100 0814 504");
+
+      // const res = await fetch(`${this.baseURL}/invoice/setlunas`, {
+      //   method: "POST",
+      //   headers: {
+      //     Accept: "application/json, text/javascript, */*; q=0.01",
+      //     "X-Requested-With": "XMLHttpRequest",
+      //     Cookie: cookie,
+      //   },
+      //   body: formData,
+      //   credentials: "same-origin",
+      // });
+
+      // if (res.status != 200)
+      //   return Promise.reject(
+      //     new Error("Response not status 200 : " + JSON.stringify(res)),
+      //   );
+
+      // const textResult = await res.text();
+
+      // console.log(Object.fromEntries(res.headers));
+      // console.log(textResult);
+
+      // console.log({
+      //   res,
+      //   resStatus: res.status,
+      //   textResult,
+      //   token: csrf?.token,
+      // });
+
+      // if (res.headers.get("content-type")?.search("application/json") != -1) {
+      //   return await res.json();
+      // }
+
+      // return typeof textResult == "string"
+      //   ? JSON.parse(textResult)
+      //   : textResult;
     } catch (err) {
       return Promise.reject(err);
     }
@@ -218,7 +274,11 @@ export class HttpPaymentApi {
         responseType: "json",
       });
 
-      if (res.status != 200) return Promise.reject({ res });
+      if (res.status != 200)
+        return Promise.reject(
+          new Error("Response not status 200 : " + JSON.stringify(res)),
+        );
+
       if (res.headers["Content-Type"].search("application/json") == -1)
         return Promise.reject({ res });
 
@@ -243,7 +303,11 @@ export class HttpPaymentApi {
         responseType: "json",
       });
 
-      if (res.status != 200) return Promise.reject({ res });
+      if (res.status != 200)
+        return Promise.reject(
+          new Error("Response not status 200 : " + JSON.stringify(res)),
+        );
+
       if (res.headers["Content-Type"].search("application/json") == -1)
         return Promise.reject({ res });
 
@@ -277,9 +341,15 @@ export class HttpPaymentApi {
         responseType: "json",
       });
 
-      if (res.status != 200) return Promise.reject({ res });
+      if (res.status != 200)
+        return Promise.reject(
+          new Error("Response not status 200 : " + JSON.stringify(res)),
+        );
+
       if (res.headers["Content-Type"].search("application/json") == -1)
-        return Promise.reject({ res });
+        return Promise.reject(
+          new Error("Response not json format : " + JSON.stringify(res)),
+        );
 
       return Promise.resolve(res.data);
     } catch (err) {
@@ -312,9 +382,15 @@ export class HttpPaymentApi {
         },
         responseType: "json",
       });
-      if (res.status != 200) return Promise.reject({ res });
+      if (res.status != 200)
+        return Promise.reject(
+          new Error("Response not status 200 : " + JSON.stringify(res)),
+        );
+
       if (res.headers["Content-Type"].search("application/json") == -1)
-        return Promise.reject({ res });
+        return Promise.reject(
+          new Error("Response not json format : " + JSON.stringify(res)),
+        );
 
       return Promise.resolve(res.data);
     } catch (err) {
@@ -340,9 +416,15 @@ export class HttpPaymentApi {
         responseType: "json",
       });
 
-      if (res.status != 200) return Promise.reject({ res });
+      if (res.status != 200)
+        return Promise.reject(
+          new Error("Response not status 200 : " + JSON.stringify(res)),
+        );
+
       if (res.headers["Content-Type"].search("application/json") == -1)
-        return Promise.reject({ res });
+        return Promise.reject(
+          new Error("Response not json format : " + JSON.stringify(res)),
+        );
 
       return true;
     } catch (err) {

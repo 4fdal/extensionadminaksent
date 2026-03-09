@@ -15,8 +15,8 @@
     "postinstall": "node ./scripts/modify-typeorm.cjs",
     "test.e2e": "cypress run",
     "test.unit": "vitest",
-    "build:android": "ionic cap sync android && ionic cap run android --target 087302528C003534",
-    "dev:android": "ionic cap sync android && ionic cap run android -l --external --verbose --target 087302528C003534 ",
+    "build:android": "ionic cap sync android && ionic cap run android ",
+    "dev:android": "ionic cap sync android && ionic cap run android -l --external --verbose  ",
     "emulator": "emulator -avd Pixel_8_Pro",
     "lint": "eslint"
   },

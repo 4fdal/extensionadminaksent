@@ -25,6 +25,7 @@ import { Customer } from "@/types/customer";
 import {
   dateConvertToString,
   formatRupiah,
+  logError,
   timeConvertToString,
 } from "@/utils/helpers";
 import SelectCustomer from "@/components/customer/SelectCustomer";
@@ -135,7 +136,33 @@ const PaymentPage: React.FC = () => {
               });
             }
 
-            console.log("MASUK SINI GAK")
+            // selectedCustomer.paid = {
+            //   invoice: selectedCustomer.unpaid.invoice,
+            //   isrollback: 0,
+            //   namakategoriinvoice: selectedCustomer.unpaid.namakategoriinvoice,
+            //   nolayanan: selectedCustomer.unpaid.nolayanan,
+            //   pelanggan: selectedCustomer.unpaid.pelanggan,
+            //   username: selectedCustomer.unpaid.username,
+            //   namapelanggan: selectedCustomer.unpaid.namapelanggan,
+            //   namaprofile: selectedCustomer.unpaid.namaprofile,
+            //   mitra: selectedCustomer.mitra.toString(),
+            //   komisi: "",
+            //   subtotal: selectedCustomer.unpaid.subtotal,
+            //   diskon: selectedCustomer.unpaid.diskon,
+            //   ppn: selectedCustomer.unpaid.ppn,
+            //   kodeunik: selectedCustomer.unpaid.kodeunik,
+            //   total: selectedCustomer.unpaid.total,
+            //   biller: "",
+            //   tglbayar: datePayment,
+            //   jambayar: timePayment,
+            //   carabayar: "",
+            //   namachannel: "",
+            //   paycode: "",
+            //   catatan: selectedCustomer.unpaid.catatan,
+            //   lastupdate: "",
+            // };
+            // selectedCustomer.ispaid = true;
+            // selectedCustomer.unpaid = undefined;
           }
 
           if (!selectedCustomer.payment) {
@@ -156,10 +183,21 @@ const PaymentPage: React.FC = () => {
               updated_at: undefined,
             };
 
-            await HttpPaymentApi.create(reqPayment);
+            const resPayment = await HttpPaymentApi.create(reqPayment);
+
+            console.log({ resPayment });
+
+            // reqPayment.id = resPayment?.id;
+            // selectedCustomer.payment = reqPayment;
           }
 
-          await uc?.reqAllCustomers(true);
+          // const findIndex = uc?.customers.findIndex(
+          //   (item) => item.nolayanan == selectedCustomer.nolayanan,
+          // );
+          // if (findIndex && findIndex != -1 && uc) {
+          //   uc.customers[findIndex] = selectedCustomer;
+          //   uc.setCustomers([...uc.customers]);
+          // }
 
           setImagePaymentSource(null);
           setSelectedCustomer(null);
@@ -174,12 +212,18 @@ const PaymentPage: React.FC = () => {
           history.replace("/customer");
         } catch (error) {
           console.error("[error] handlePaymentSubmit : ", { error });
+          let message = "Ada sesuatu yang error! ";
+          if (error instanceof Error) {
+            message += " " + error.message;
+          }
           present({
-            message: "Ada sesuatu yang error!",
+            message,
             position: "bottom",
             duration: 1500,
             color: "danger",
           });
+
+          if (error instanceof Error) logError(error);
         }
         setLoadingRequest(false);
       }

@@ -21,6 +21,7 @@ To use an Android Emulator you must use an API 24+ system image. The System WebV
 Running on the Command-Line
 To run the project on a device or emulator, run:
 > npx cap run android
+> ionic cap sync android && ionic cap run android -l --external --verbose --target 087302528C003534
 
 
 Debug
