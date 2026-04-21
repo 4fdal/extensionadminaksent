@@ -199,6 +199,7 @@ const PaymentPage: React.FC = () => {
           //   uc.setCustomers([...uc.customers]);
           // }
 
+          await uc?.reqAllCustomers(true);
           setImagePaymentSource(null);
           setSelectedCustomer(null);
 
