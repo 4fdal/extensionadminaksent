@@ -7,7 +7,15 @@
  * Format date to string
  * Usage: formatDate(new Date(), 'DD/MM/YYYY')
  */
-export const formatDate = (date: Date, format: string = "DD/MM/YYYY"): string => {
+export const formatDate = (
+  dateInput: Date | string | number,
+  format: string = "DD/MM/YYYY",
+): string => {
+  const date = new Date(dateInput);
+
+  // Handle invalid dates
+  if (isNaN(date.getTime())) return "Invalid Date";
+
   const day = date.getDate().toString().padStart(2, "0");
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const year = date.getFullYear();
@@ -22,6 +30,17 @@ export const formatDate = (date: Date, format: string = "DD/MM/YYYY"): string =>
     .replace("HH", hours)
     .replace("mm", minutes)
     .replace("ss", seconds);
+};
+
+/**
+ * Convert date and time objects to string
+ * Format: YYYY-MM-DD HH:mm:ss
+ */
+export const dateTimeConvertToString = (
+  date: Date | string | number,
+  time: Date | string | number,
+): string => {
+  return `${formatDate(date, "YYYY-MM-DD")} ${formatDate(time, "HH:mm:ss")}`;
 };
 
 /**

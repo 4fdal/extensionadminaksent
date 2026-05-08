@@ -8,7 +8,7 @@ import {
 } from "@ionic/react";
 import { personOutline, calendarOutline, timeOutline } from "ionicons/icons";
 import { PaymentCustomer } from "@/types/customer";
-import { dateConvertToString, timeConvertToString } from "@/utils/helpers";
+import { formatDate } from "@/utils";
 
 type PaymentDetailCustomerProp = {
   data?: PaymentCustomer;
@@ -64,13 +64,13 @@ const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
             {props.data?.tanggalbayar && (
               <span className="flex items-center gap-1">
                 <IonIcon icon={calendarOutline} className="text-gray-400" />
-                {dateConvertToString(new Date(props.data?.tanggalbayar))}
+                {formatDate(new Date(props.data.tanggalbayar), "DD/MM/YYYY")}
               </span>
             )}
             {props.data?.waktubayar && (
               <span className="flex items-center gap-1">
                 <IonIcon icon={timeOutline} className="text-gray-400" />
-                {timeConvertToString(new Date(props.data?.waktubayar))}
+                {formatDate(new Date(props.data.waktubayar), "HH:mm:ss")}
               </span>
             )}
           </div>

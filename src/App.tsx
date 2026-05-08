@@ -35,9 +35,9 @@ import "./theme/global.css";
 import PaymentPage from "./pages/Payment/Payment";
 import CustomerPage from "./pages/Customer/Customer";
 import React from "react";
-import { useCustomer } from "./hook/requests/customer";
+import { useCustomer } from "./hooks/requests/customer";
 import { AppContext } from "./context/app-context";
-import { useShareTarget } from "./hook/share-target";
+import { useShareTarget } from "./hooks/share-target";
 
 setupIonicReact();
 
@@ -50,9 +50,6 @@ const App: React.FC = () => {
       <IonApp>
         <IonReactRouter>
           <IonRouterOutlet>
-            {/* <Route exact path="/">
-              <ValidationPage />
-            </Route> */}
             <Route exact path="/customer">
               <CustomerPage />
             </Route>

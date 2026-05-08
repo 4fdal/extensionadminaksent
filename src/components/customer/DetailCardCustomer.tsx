@@ -1,9 +1,5 @@
 import { Customer } from "@/types/customer";
-import {
-  dateTimeConvertToString,
-  formatDate,
-  formatRupiah,
-} from "@/utils/helpers";
+import { formatRupiah, formatDate, dateTimeConvertToString } from "@/utils";
 import { IonIcon } from "@ionic/react";
 import {
   alertCircleOutline,
@@ -37,55 +33,27 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
     );
   };
 
-  const status = () => {
-    if (props.customer?.isolirmanual) {
-      return "Isolir";
-    }
-
-    if (props.customer?.aktif) {
-      return "Active";
-    }
-
+  const getStatusLabel = () => {
+    if (props.customer?.isolirmanual) return "Isolir";
+    if (props.customer?.aktif) return "Active";
     return "Deactive";
+  };
+
+  const getCardClassName = () => {
+    const baseClass =
+      "relative bg-white rounded-2xl shadow-sm border-2 transition-all duration-200 overflow-hidden";
+    const statusClass = props.customer?.isolirmanual
+      ? "border-red-500 shadow-md"
+      : "border-transparent hover:border-gray-200";
+    return `${baseClass} ${statusClass}`;
   };
 
   return (
     <div
       key={1}
-      className={`relative bg-white rounded-2xl shadow-sm border-2 transition-all duration-200 overflow-hidden ${
-        props.customer?.isolirmanual
-          ? "border-red-500 shadow-md"
-          : "border-transparent hover:border-gray-200"
-      }`}
+      className={getCardClassName()}
       style={{ animationDelay: `${1 * 50}ms` }}
     >
-      {/* Selection Checkbox */}
-      {/* <div
-        className="absolute top-3 left-3 z-10"
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
-        <div
-          className={`w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
-            false
-              ? "bg-blue-500 text-white"
-              : "bg-gray-100 border-2 border-gray-300"
-          }`}
-        >
-          {false && <IonIcon icon={checkmarkOutline} className="text-sm" />}
-        </div>
-      </div> */}
-
-      {/* More Options */}
-      {/* <button
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        className="absolute top-3 right-3 z-10 p-1 hover:bg-gray-100 rounded-lg transition-colors"
-      >
-        <IonIcon icon={ellipsisVertical} className="text-gray-400 text-lg" />
-      </button> */}
 
       {/* Card Header - Status & Invoice */}
       <div
@@ -98,7 +66,7 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
             <span
               className={`text-xs font-bold uppercase ${!props.customer?.isolirmanual ? "text-blue-500" : ""}`}
             >
-              {status()}
+              {getStatusLabel()}
             </span>
             <span className="text-gray-300">|</span>
             <span className="text-xs font-mono font-semibold text-gray-600">
@@ -292,24 +260,6 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
             </button>
           )}
         </div>
-        {/* <button
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          className="flex-1 py-2 bg-green-50 text-green-600 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors flex items-center justify-center gap-1"
-        >
-          <IonIcon icon={callOutline} className="text-sm" />
-          Hubungi
-        </button> */}
-        {/* <button
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          className="flex-1 py-2 bg-green-50 text-green-600 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors flex items-center justify-center gap-1"
-        >
-          <IonIcon icon={cashOutline} className="text-sm" />
-          Bayar
-        </button> */}
         {props.customer?.paid && (
           <button
             onClick={(e) => {

@@ -63,7 +63,23 @@ export const isExpiredCookie = async (
     },
   });
 
-  return response.url != url;
+  if (response.url != url) return true;
+
+  // Check if content is HTML and contains login indicators
+  const contentType =
+    response.headers["Content-Type"] || response.headers["content-type"] || "";
+  if (contentType.toLowerCase().includes("text/html")) {
+    const body = typeof response.data === "string" ? response.data : "";
+    if (
+      body.toLowerCase().includes("login") ||
+      body.toLowerCase().includes("username") ||
+      body.toLowerCase().includes("password")
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 export const getCookieTungkaLilirAdmin = async (): Promise<string | null> => {

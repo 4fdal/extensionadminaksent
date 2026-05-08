@@ -1,4 +1,4 @@
-import { CapacitorHttpResponse } from "@capacitor/core";
+import { HttpResponse } from "@capacitor/core";
 
 /**
  * Custom error for HTTP validation failures
@@ -7,7 +7,7 @@ export class HttpValidationError extends Error {
   constructor(
     message: string,
     public statusCode?: number,
-    public response?: CapacitorHttpResponse
+    public response?: HttpResponse
   ) {
     super(message);
     this.name = "HttpValidationError";
@@ -24,7 +24,7 @@ export class HttpValidationError extends Error {
  * @throws HttpValidationError if response is invalid
  */
 export const validateHttpResponse = (
-  response: CapacitorHttpResponse,
+  response: HttpResponse,
   context?: string
 ): any => {
   // Validate status code
@@ -37,8 +37,25 @@ export const validateHttpResponse = (
   }
 
   // Validate content type
-  const contentType = response.headers["Content-Type"] || "";
-  if (!contentType.includes("application/json")) {
+  const contentType =
+    response.headers["Content-Type"] || response.headers["content-type"] || "";
+  if (contentType.toLowerCase().includes("text/html")) {
+    const isLoginPage =
+      typeof response.data === "string" &&
+      (response.data.toLowerCase().includes("login") ||
+        response.data.toLowerCase().includes("username") ||
+        response.data.toLowerCase().includes("password"));
+
+    throw new HttpValidationError(
+      isLoginPage
+        ? "Session expired or authentication required"
+        : `Expected JSON response, got HTML. Status: ${response.status}`,
+      response.status,
+      response
+    );
+  }
+
+  if (!contentType.toLowerCase().includes("application/json")) {
     throw new HttpValidationError(
       `Expected JSON response, got: ${contentType}`,
       response.status,

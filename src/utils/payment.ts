@@ -3,6 +3,7 @@ import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 import { getCookieTungkaLilirAdmin } from "./cookie";
 import { AppLauncher } from "@capacitor/app-launcher";
+import { API_CONFIG, ACCOUNT_CONFIG } from "@/config";
 
 export const KEY_PAYMENT_PREFERENCE = "PAYMENT_HISTORY";
 
@@ -136,7 +137,7 @@ export class PaymentList {
 }
 
 export class HttpPaymentRlradius {
-  static baseURL = "https://tungkalilir.rlradius.app";
+  static baseURL = API_CONFIG.BASE_URL;
 
   static async getCSRF(): Promise<{ status: boolean; token: string } | null> {
     try {
@@ -192,11 +193,11 @@ export class HttpPaymentRlradius {
         _token: String(csrf?.token),
         invoice: invoice,
         carabayar: "2",
-        rekening: "7975 0100 0814 504",
+        rekening: ACCOUNT_CONFIG.ACCOUNT_NUMBER,
       }).toString();
 
       const res = await CapacitorHttp.post({
-        url: "https://tungkalilir.rlradius.app/invoice/setlunas",
+        url: `${this.baseURL}/invoice/setlunas`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           "X-Requested-With": "XMLHttpRequest",
@@ -215,48 +216,6 @@ export class HttpPaymentRlradius {
           ? JSON.parse(res.data)
           : res.data
         : null;
-
-      // const formData = new FormData();
-      // if (csrf?.token) formData.append("_token", csrf?.token);
-      // formData.append("invoice", invoice);
-      // formData.append("carabayar", "2");
-      // formData.append("rekening", "7975 0100 0814 504");
-
-      // const res = await fetch(`${this.baseURL}/invoice/setlunas`, {
-      //   method: "POST",
-      //   headers: {
-      //     Accept: "application/json, text/javascript, */*; q=0.01",
-      //     "X-Requested-With": "XMLHttpRequest",
-      //     Cookie: cookie,
-      //   },
-      //   body: formData,
-      //   credentials: "same-origin",
-      // });
-
-      // if (res.status != 200)
-      //   return Promise.reject(
-      //     new Error("Response not status 200 : " + JSON.stringify(res)),
-      //   );
-
-      // const textResult = await res.text();
-
-      // console.log(Object.fromEntries(res.headers));
-      // console.log(textResult);
-
-      // console.log({
-      //   res,
-      //   resStatus: res.status,
-      //   textResult,
-      //   token: csrf?.token,
-      // });
-
-      // if (res.headers.get("content-type")?.search("application/json") != -1) {
-      //   return await res.json();
-      // }
-
-      // return typeof textResult == "string"
-      //   ? JSON.parse(textResult)
-      //   : textResult;
     } catch (err) {
       return Promise.reject(err);
     }
@@ -264,8 +223,7 @@ export class HttpPaymentRlradius {
 }
 
 export class HttpPaymentApi {
-  static baseURL: string =
-    "https://script.google.com/macros/s/AKfycbyHqUZHwWPsJQCH28KLezVMN3S_E5KpPhDuZEhnNkUT3vKKeAhjHxt80mpO40zosvHouw/exec";
+  static baseURL: string = API_CONFIG.PAYMENT_API_URL;
 
   static async getAll(): Promise<Array<Payment>> {
     try {
@@ -279,8 +237,11 @@ export class HttpPaymentApi {
           new Error("Response not status 200 : " + JSON.stringify(res)),
         );
 
-      if (res.headers["Content-Type"].search("application/json") == -1)
+      const contentType =
+        res.headers["Content-Type"] || res.headers["content-type"] || "";
+      if (contentType.toLowerCase().indexOf("application/json") == -1)
         return Promise.reject({ res });
+
 
       return Promise.resolve(res.data);
     } catch (err) {
@@ -482,7 +443,7 @@ Terima kasih`;
   message = message.replaceAll(
     "{link_invoice}",
     String(
-      `https://tungkalilir.rlradius.app/i/${btoa(`${cust.unpaid?.invoice}${cust.profile?.phone}`)}`,
+      `${API_CONFIG.BASE_URL}/i/${btoa(`${cust.unpaid?.invoice}${cust.profile?.phone}`)}`,
     ),
   );
   message = encodeURIComponent(message);

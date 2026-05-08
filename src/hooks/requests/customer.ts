@@ -1,7 +1,6 @@
 import {
   Customer,
   DataTableResponse,
-  FilterCustomerStatus,
   HomeCustomer,
   PaidCustomerItem,
   PaymentCustomer,
@@ -690,10 +689,7 @@ export type ResultUseCustomer = {
   totalCustomer: number;
   totalPaidCustomer: number;
   totalUnpaidCustomer: number;
-  countUnpaidNotSyncCustomer: number;
-  countNewCustomer: number;
-  totalIsolirCustomer: number;
-  setTabFilter: Dispatch<SetStateAction<FilterCustomerStatus>>;
+  setTabFilter: Dispatch<SetStateAction<"UNPAID" | "PAID" | "ALL">>;
   setSearchFilter: Dispatch<SetStateAction<string>>;
   syncAllCustomers(): Promise<void>;
   reqAllCustomers(resync: boolean): Promise<void>;
@@ -703,13 +699,11 @@ export const useCustomer = (): ResultUseCustomer => {
   const [customers, setCustomers] = useState<Array<Customer>>([]);
   const [totalCustomer, setTotalCustomer] = useState<number>(0);
   const [totalPaidCustomer, setTotalPaidCustomer] = useState<number>(0);
-  const [countUnpaidNotSyncCustomer, setCountUnpaidNotSyncCustomer] =
-    useState<number>(0);
-  const [countNewCustomer, setCountNewCustomer] = useState<number>(0);
   const [totalUnpaidCustomer, setTotalUnpaidCustomer] = useState<number>(0);
-  const [totalIsolirCustomer, setTotalIsolirCustomer] = useState<number>(0);
 
-  const [tabFilter, setTabFilter] = useState<FilterCustomerStatus>("UNPAID");
+  const [tabFilter, setTabFilter] = useState<"UNPAID" | "PAID" | "ALL">(
+    "UNPAID",
+  );
   const [searchFilter, setSearchFilter] = useState<string>("");
 
   const filteredCustomers = useMemo(() => {
@@ -728,14 +722,9 @@ export const useCustomer = (): ResultUseCustomer => {
 
     if (tabFilter === "UNPAID") {
       dataFilter = dataFilter.filter((c) => !c.ispaid);
-    } else if (tabFilter === "PAID") {
+    }
+    if (tabFilter === "PAID") {
       dataFilter = dataFilter.filter((c) => c.ispaid);
-    } else if (tabFilter === "PAID_NO_SYNC") {
-      dataFilter = dataFilter.filter((c) => c.ispaid && !c.payment);
-    } else if (tabFilter === "NEW") {
-      dataFilter = dataFilter.filter((c) => !c.ispaid && !c.paid);
-    } else if (tabFilter === "ISOLIR") {
-      dataFilter = dataFilter.filter((c) => !c.aktif);
     }
 
     return dataFilter;
@@ -748,12 +737,9 @@ export const useCustomer = (): ResultUseCustomer => {
     totalCustomer,
     totalPaidCustomer,
     totalUnpaidCustomer,
-    countUnpaidNotSyncCustomer,
-    countNewCustomer,
-    totalIsolirCustomer,
     setTabFilter,
     setSearchFilter,
-    async syncAllCustomers() {},
+    async syncAllCustomers() { },
     async reqAllCustomers(resync: boolean = false) {
       try {
         const check = await httpGetHomeCustomer();
@@ -863,10 +849,7 @@ export const useCustomer = (): ResultUseCustomer => {
 
           let countAllData = 0;
           let countPaidCustomer = 0;
-          let countUnpaidNotSyncCustomer = 0;
-          let countNewCustomer = 0;
           let countUnpaidCustomer = 0;
-          let countIsolirCustomer = 0;
           const merged: Array<Customer> = allDataCustomers
             .map((cusItem) => {
               cusItem.profile = profileMap.get(cusItem.pelanggan);
@@ -878,13 +861,6 @@ export const useCustomer = (): ResultUseCustomer => {
               countAllData += 1;
               if (cusItem.ispaid) countPaidCustomer += 1;
               else countUnpaidCustomer += 1;
-
-              if (cusItem.ispaid && !cusItem.payment)
-                countUnpaidNotSyncCustomer += 1;
-
-              if (!cusItem.unpaid && !cusItem.paid) countNewCustomer += 1;
-
-              if (!cusItem.aktif) countIsolirCustomer += 1;
 
               return cusItem;
             })
@@ -913,10 +889,7 @@ export const useCustomer = (): ResultUseCustomer => {
           setCustomers(merged);
           setTotalCustomer(countAllData);
           setTotalPaidCustomer(countPaidCustomer);
-          setCountUnpaidNotSyncCustomer(countUnpaidNotSyncCustomer);
-          setCountNewCustomer(countNewCustomer);
           setTotalUnpaidCustomer(countUnpaidCustomer);
-          setTotalIsolirCustomer(countIsolirCustomer);
         }
       } catch (error) {
         console.error("[Error] reqAllCustomers: ", error);

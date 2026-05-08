@@ -1,4 +1,4 @@
-import { ResultUseCustomer } from "@/hook/requests/customer";
+import { ResultUseCustomer } from "@/hooks/requests/customer";
 import { SharedFile } from "@capgo/capacitor-share-target";
 import { createContext, useContext } from "react";
 

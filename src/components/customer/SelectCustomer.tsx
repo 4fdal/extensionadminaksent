@@ -17,7 +17,7 @@ import {
 } from "ionicons/icons";
 import React, { useEffect, useMemo, useState } from "react";
 import DataListScrolling from "../list/DataListScrolling";
-import { formatRupiah } from "@/utils/helpers";
+import { formatRupiah } from "@/utils";
 
 // Warna dan icon berdasarkan tipe pelanggan
 const getCustomerStyle = (type: string) => {
@@ -180,14 +180,10 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
                     <IonIcon icon={call} className="text-xs text-blue-500" />
                     {selectedCustomer.profile?.phone}
                   </span>
-                  {/* <span
-                    className="text-xs font-bold px-2.5 py-1 rounded-full text-white shadow-sm"
-                    style={{
-                      backgroundColor: getCustomerStyle("person").color,
-                    }}
-                  >
-                    {selectedCustomer.kodeunik}
-                  </span> */}
+                  <span className="text-sm text-gray-600 flex items-center gap-1 bg-white px-2 py-0.5 rounded-full shadow-sm">
+                    <IonIcon icon={call} className="text-xs text-blue-500" />
+                    {selectedCustomer.profile?.phone}
+                  </span>
                 </div>
               ) : (
                 <div className="text-sm text-gray-400 mt-1">
@@ -265,20 +261,6 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
           </div>
 
           {/* Filter Chips */}
-          {/* <div className="px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-10">
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {["Semua", "Perusahaan", "Toko", "CV", "UD", "Perorangan"].map(
-                (filter, idx) => (
-                  <button
-                    key={filter}
-                    className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${idx === 0 ? "bg-blue-500 text-white shadow-md" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                  >
-                    {filter}
-                  </button>
-                ),
-              )}
-            </div>
-          </div> */}
 
           <IonContent className="bg-gray-50">
             <div className="p-4 space-y-3">

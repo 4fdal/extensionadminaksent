@@ -23,11 +23,8 @@ import ImagePicker from "@/components/input/ImagePicker";
 import { useAppContext } from "@/context/app-context";
 import { Customer } from "@/types/customer";
 import {
-  dateConvertToString,
   formatRupiah,
-  logError,
-  timeConvertToString,
-} from "@/utils/helpers";
+} from "@/utils";
 import SelectCustomer from "@/components/customer/SelectCustomer";
 import DateTimeInput from "@/components/input/DateTimeInput";
 import { format } from "date-fns";
@@ -46,7 +43,7 @@ import DetailCardCustomer from "@/components/customer/DetailCardCustomer";
 const PaymentPage: React.FC = () => {
   const [present] = useIonToast();
   const history = useHistory();
-  const { customer: uc, imageShare } = useAppContext();
+  const { customer: customerContext, imageShare } = useAppContext();
 
   const [paymentList, setPaymentList] = useState<Array<Payment> | null>(null);
   const [paymentExits, setPaymentExits] = useState<Array<Payment>>([]);
@@ -77,22 +74,22 @@ const PaymentPage: React.FC = () => {
     const searchParams = new URLSearchParams(window.location.search);
     const invoice = searchParams.get("invoice");
 
-    if ((uc?.customers?.length ?? 0) > 0 && invoice) {
-      const selected = uc?.customers.find(
+    if ((customerContext?.customers?.length ?? 0) > 0 && invoice) {
+      const selected = customerContext?.customers.find(
         (customer) => (customer.unpaid ?? customer.paid)?.invoice == invoice,
       );
 
       if (selected) setSelectedCustomer(selected);
     }
-  }, [window.location, uc?.customers]);
+  }, [window.location, customerContext?.customers]);
 
   useEffect(() => {
     (async () => {
-      if (uc?.customers.length == 0) {
+      if (customerContext?.customers.length == 0) {
         try {
-          await uc?.reqAllCustomers(false);
+          await customerContext?.reqAllCustomers(false);
         } catch (error) {
-          console.error("[error] uc : ", error);
+          console.error("[error] customerContext : ", error);
         }
       }
 
@@ -199,7 +196,7 @@ const PaymentPage: React.FC = () => {
           //   uc.setCustomers([...uc.customers]);
           // }
 
-          await uc?.reqAllCustomers(true);
+          await customerContext?.reqAllCustomers(true);
           setImagePaymentSource(null);
           setSelectedCustomer(null);
 
@@ -224,7 +221,10 @@ const PaymentPage: React.FC = () => {
             color: "danger",
           });
 
-          if (error instanceof Error) logError(error);
+          if (error instanceof Error) {
+            // logError is deprecated, using console.error for now or a centralized logger if available
+            console.error(error);
+          }
         }
         setLoadingRequest(false);
       }
@@ -236,7 +236,20 @@ const PaymentPage: React.FC = () => {
 
     const currPaymentExits: Array<Payment> | undefined = paymentList?.filter(
       (item) => {
-        const itemDateTime = `${dateConvertToString(new Date(item.tanggalbayar))} ${timeConvertToString(new Date(item.waktubayar))}`;
+        // Using new date converter pattern or local formatting if specific
+        const itemDate = new Date(item.tanggalbayar);
+        const itemTime = new Date(item.waktubayar);
+        
+        // Manual formatting to match strDateTime format if needed, 
+        // but ideally we use a centralized utility.
+        const HH = String(itemTime.getHours()).padStart(2, "0");
+        const mm = String(itemTime.getMinutes()).padStart(2, "0");
+        const ss = String(itemTime.getSeconds()).padStart(2, "0");
+        const yyyy = String(itemDate.getFullYear()).padStart(4, "0");
+        const MM = String(itemDate.getMonth() + 1).padStart(2, "0");
+        const dd = String(itemDate.getDate()).padStart(2, "0");
+        
+        const itemDateTime = `${yyyy}-${MM}-${dd} ${HH}:${mm}:${ss}`;
         return strDateTime == itemDateTime;
       },
     );
@@ -245,7 +258,7 @@ const PaymentPage: React.FC = () => {
   };
 
   const handleClickPaymentExitsItem = (item: Payment) => {
-    const customer = uc?.customers.find(
+    const customer = customerContext?.customers.find(
       (custItem) => custItem.nolayanan == item.nolayanan,
     );
 
@@ -355,101 +368,16 @@ const PaymentPage: React.FC = () => {
                 </div>
               )}
 
-              {/* <DateTimeInputText
-                value={paymentDate}
-                onChange={setPaymentDate}
-              /> */}
-              {/* <IonItem
-                lines="none"
-                className="bg-gray-100 rounded-xl px-4 py-1"
-              >
-                <IonIcon
-                  icon={calendar}
-                  slot="start"
-                  className="mr-3 text-blue-500 text-xl"
-                />
-
-                <IonDatetime
-                  presentation="time"
-                  hourCycle="h23"
-                  onIonChange={(e) => console.log(e.detail.value)}
-                />
-                <IonDatetimeButton datetime="datetime"></IonDatetimeButton>
-                <IonModal keepContentsMounted={true}>
-                  <IonDatetime
-                    id="datetime"
-                    value={paymentDate}
-                    onIonChange={(e) =>
-                      setPaymentDate(e.detail.value as string)
-                    }
-                    showDefaultButtons={true}
-                    presentation="time"
-                    hourCycle="h23"
-                    locale="id-ID"
-                  />
-                </IonModal>
-              </IonItem> */}
             </div>
 
             {/* Select Nama Pelanggan dengan Search */}
             <SelectCustomer
-              data={uc?.customers ?? []}
+              data={customerContext?.customers ?? []}
               selected={selectedCustomer}
               onChange={setSelectedCustomer}
             />
 
             {/* No Invoice */}
-            {/* <div className="mb-5">
-              <IonLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">
-                Nomor Invoice
-              </IonLabel>
-              <IonItem
-                lines="none"
-                className="bg-gray-100 rounded-xl px-4 py-1"
-              >
-                <IonIcon
-                  icon={receipt}
-                  slot="start"
-                  className="mr-3 text-blue-500 text-xl"
-                />
-                <IonInput
-                  readonly={true}
-                  placeholder="INV-2024-XXXX"
-                  value={selectedCustomer?.unpaid?.invoice}
-                  onIonChange={(e) => setInvoiceNumber(e.detail.value!)}
-                  className="font-medium text-gray-700"
-                />
-              </IonItem>
-            </div> */}
-
-            {/* Total Pembayaran */}
-            {/* <div className="mb-2">
-              <IonLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">
-                Total Pembayaran
-              </IonLabel>
-              <IonItem
-                lines="none"
-                className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl px-4 py-2 border-2 border-green-400"
-              >
-                <IonIcon
-                  icon={cash}
-                  slot="start"
-                  className="mr-3 text-green-600 text-2xl"
-                />
-                <IonInput
-                  placeholder="0"
-                  type="number"
-                  value={totalPayment}
-                  onIonChange={(e) => setTotalPayment(e.detail.value!)}
-                  className="font-bold text-2xl text-green-800 placeholder-green-300"
-                />
-              </IonItem>
-              {totalPayment && (
-                <IonText className="block mt-2 text-sm text-green-600 font-bold bg-green-50 inline-block px-3 py-1 rounded-full">
-                  {formatRupiah(Number(totalPayment))}
-                </IonText>
-              )}
-            </div> */}
           </IonCardContent>
         </IonCard>
 
