@@ -56,51 +56,68 @@ export const isExpiredCookie = async (
   url: string,
   cookie?: string | null | undefined,
 ) => {
-  const response = await CapacitorHttp.get({
-    url,
-    headers: {
-      Cookie: cookie ?? "",
-    },
-  });
+  try {
+    if (cookie == null || cookie == "" || cookie == undefined) return true;
 
-  if (response.url != url) return true;
+    console.log("[isExpiredCookie] Checking cookie", cookie);
 
-  // Check if content is HTML and contains login indicators
-  const contentType =
-    response.headers["Content-Type"] || response.headers["content-type"] || "";
-  if (contentType.toLowerCase().includes("text/html")) {
-    const body = typeof response.data === "string" ? response.data : "";
-    if (
-      body.toLowerCase().includes("login") ||
-      body.toLowerCase().includes("username") ||
-      body.toLowerCase().includes("password")
-    ) {
-      return true;
-    }
+    const response = await CapacitorHttp.get({
+      url,
+      headers: {
+        Cookie: cookie,
+      },
+    });
+
+    if (response.status != 200 && response.url != url) return true
+
+    return false;
+  } catch (error) {
+    console.error("[isExpiredCookie] Error checking cookie:", error);
+    return true; // Assume expired on error to be safe
   }
-
-  return false;
 };
 
+let singleFlightPromise: Promise<string | null> | null = null;
+
 export const getCookieTungkaLilirAdmin = async (): Promise<string | null> => {
-  const PREF_KEY_COOKIE = "COOKIE";
-  let cookie: string | null = (await Preferences.get({ key: PREF_KEY_COOKIE }))
-    .value;
-
-  const openUrl = "https://tungkalilir.rlradius.app/adminrad";
-  const closeWithUrl = "https://tungkalilir.rlradius.app/home";
-
-  if (cookie == null || (await isExpiredCookie(closeWithUrl, cookie))) {
-    cookie = await handleOpenBrowserLoginGetCookie({
-      openUrl,
-      closeWithUrl,
-    });
+  if (singleFlightPromise) {
+    return singleFlightPromise;
   }
 
-  if (cookie) {
-    await Preferences.set({ key: PREF_KEY_COOKIE, value: cookie });
-    return cookie;
-  }
+  singleFlightPromise = (async () => {
+    try {
+      const PREF_KEY_COOKIE = "COOKIE";
+      const prefCookie = await Preferences.get({ key: PREF_KEY_COOKIE });
 
-  return null;
+      const openUrl = "https://tungkalilir.rlradius.app/adminrad";
+      const closeWithUrl = "https://tungkalilir.rlradius.app/home";
+
+      const isExpired = await isExpiredCookie(closeWithUrl, prefCookie?.value);
+
+      console.log({ isExpired, prefCookie });
+      const needsRefresh = prefCookie.value == null || prefCookie.value == "" || isExpired;
+      if (needsRefresh) {
+        console.log("[getCookie] Cookie is missing or expired. Starting refresh...");
+        const newCookie = await handleOpenBrowserLoginGetCookie({
+          openUrl,
+          closeWithUrl,
+        });
+
+        if (newCookie) {
+          await Preferences.set({ key: PREF_KEY_COOKIE, value: newCookie });
+          console.log("[getCookie] New cookie saved successfully.");
+        }
+        return newCookie;
+      }
+
+      return prefCookie.value || null;
+    } catch (error) {
+      console.error("[getCookie] Error in single-flight execution:", error);
+      return null;
+    } finally {
+      singleFlightPromise = null;
+    }
+  })();
+
+  return singleFlightPromise;
 };

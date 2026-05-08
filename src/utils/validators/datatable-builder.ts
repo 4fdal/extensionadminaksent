@@ -41,18 +41,18 @@ export const buildDataTableParams = (config: DataTableConfig): URLSearchParams =
   params.append("start", (config.start ?? 0).toString());
   params.append("length", (config.length ?? 25).toString());
 
-  // Set search
-  if (config.search) {
-    params.append("search[value]", config.search);
-    params.append("search[regex]", "false");
-  }
+  // Set search (always include even if empty)
+  params.append("search[value]", config.search ?? "");
+  params.append("search[regex]", "false");
 
   // Add columns
   config.columns.forEach((col, index) => {
     params.append(`columns[${index}][data]`, col.data);
-    params.append(`columns[${index}][name]`, col.name ?? col.data);
+    params.append(`columns[${index}][name]`, col.name ?? "");
     params.append(`columns[${index}][searchable]`, (col.searchable ?? true).toString());
     params.append(`columns[${index}][orderable]`, (col.orderable ?? true).toString());
+    params.append(`columns[${index}][search][value]`, "");
+    params.append(`columns[${index}][search][regex]`, "false");
   });
 
   // Add ordering if specified

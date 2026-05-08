@@ -23,57 +23,58 @@ export class HttpValidationError extends Error {
  * @returns Parsed response data
  * @throws HttpValidationError if response is invalid
  */
-export const validateHttpResponse = (
+export const validateHttpResponse = <T>(
   response: HttpResponse,
-  context?: string
-): any => {
-  // Validate status code
+  context?: string,
+): T | null => {
+  const contextStr = context ? `(${context}) ` : "";
+
+  // 1. Validate status code
   if (response.status !== 200) {
-    throw new HttpValidationError(
-      `HTTP ${response.status}: ${context ? `(${context}) ` : ""}${JSON.stringify(response)}`,
-      response.status,
-      response
-    );
+    console.error(`[HTTP Error] ${contextStr}Status ${response.status}`, response);
+    return null;
   }
 
-  // Validate content type
-  const contentType =
-    response.headers["Content-Type"] || response.headers["content-type"] || "";
-  if (contentType.toLowerCase().includes("text/html")) {
+  const contentType = (
+    response.headers["Content-Type"] ||
+    response.headers["content-type"] ||
+    ""
+  ).toLowerCase();
+
+  const data = response.data;
+  const isStringData = typeof data === "string";
+
+  // 2. Check for HTML error pages (even if content-type says JSON, some servers misreport on error)
+  if (isStringData && data.trim().startsWith("<!DOCTYPE")) {
     const isLoginPage =
-      typeof response.data === "string" &&
-      (response.data.toLowerCase().includes("login") ||
-        response.data.toLowerCase().includes("username") ||
-        response.data.toLowerCase().includes("password"));
+      data.toLowerCase().includes("login") ||
+      data.toLowerCase().includes("username") ||
+      data.toLowerCase().includes("password");
 
-    throw new HttpValidationError(
-      isLoginPage
-        ? "Session expired or authentication required"
-        : `Expected JSON response, got HTML. Status: ${response.status}`,
-      response.status,
-      response
+    console.warn(
+      `[HTTP Warning] ${contextStr}${isLoginPage ? "Session expired" : "Received HTML instead of JSON"}`,
     );
+    return null;
   }
 
-  if (!contentType.toLowerCase().includes("application/json")) {
-    throw new HttpValidationError(
-      `Expected JSON response, got: ${contentType}`,
-      response.status,
-      response
-    );
-  }
-
-  // Parse JSON data
+  // 3. Try to return/parse JSON
   try {
-    return typeof response.data === "string"
-      ? JSON.parse(response.data)
-      : response.data;
+    if (isStringData) {
+      // If it looks like JSON, try to parse it
+      if (data.trim().startsWith("{") || data.trim().startsWith("[")) {
+        return JSON.parse(data) as T;
+      }
+      
+      // If it's a string but doesn't look like JSON, it might be a raw error message
+      console.error(`[HTTP Error] ${contextStr}Received non-JSON string data:`, data.substring(0, 200));
+      return null;
+    }
+
+    // If it's already an object/array (CapacitorHttp sometimes parses it for us)
+    return data as T;
   } catch (parseError) {
-    throw new HttpValidationError(
-      `Failed to parse JSON: ${parseError instanceof Error ? parseError.message : "Unknown error"}`,
-      response.status,
-      response
-    );
+    console.error(`[HTTP Error] ${contextStr}Failed to parse JSON:`, parseError);
+    return null;
   }
 };
 

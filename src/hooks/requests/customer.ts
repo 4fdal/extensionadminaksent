@@ -1,6 +1,7 @@
 import {
   Customer,
   DataTableResponse,
+  FilterCustomerStatus,
   HomeCustomer,
   PaidCustomerItem,
   PaymentCustomer,
@@ -8,680 +9,272 @@ import {
   RequestCustomerParams,
   UnpaidCustomerItem,
 } from "@/types/customer";
+import { API_CONFIG, LIST_CONFIG } from "@/config";
 import { getCookieTungkaLilirAdmin } from "@/utils/cookie";
 import { dateTimeConvertToString } from "@/utils/helpers";
 import { HttpPaymentApi } from "@/utils/payment";
+import { validateHttpResponse } from "@/utils/http";
+import { buildDataTableParams, DataTableColumn } from "@/utils/validators";
 import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 
+/**
+ * Column definitions for various customer data tables
+ */
+const PROFILE_COLUMNS: DataTableColumn[] = [
+  { data: "id", searchable: true, orderable: false },
+  { data: "id", searchable: true, orderable: true },
+  { data: "namapelanggan", searchable: true, orderable: true },
+  { data: "phone", searchable: true, orderable: false },
+  { data: "alamat", searchable: true, orderable: false },
+  { data: "saldo", searchable: true, orderable: false },
+  { data: "fullname", searchable: true, orderable: true },
+  { data: "phone", searchable: true, orderable: false },
+];
+
+const UNPAID_COLUMNS: DataTableColumn[] = [
+  { data: "invoice", searchable: true, orderable: false },
+  { data: "tgltempo", searchable: true, orderable: true },
+  { data: "invoice", searchable: true, orderable: true },
+  { data: "nolayanan", searchable: true, orderable: true },
+  { data: "namapelanggan", searchable: true, orderable: true },
+  { data: "namaprofile", searchable: true, orderable: true },
+  { data: "fullname", searchable: true, orderable: true },
+  { data: "namakategoriinvoice", searchable: true, orderable: true },
+  { data: "tglterbit", searchable: true, orderable: true },
+  { data: "tgltempo", searchable: true, orderable: true },
+  { data: "subtotal", searchable: true, orderable: true },
+  { data: "diskon", searchable: true, orderable: true },
+  { data: "ppn", searchable: true, orderable: true },
+  { data: "kodeunik", searchable: true, orderable: true },
+  { data: "total", searchable: true, orderable: true },
+  { data: "catatan", searchable: true, orderable: true },
+  { data: "tagih", searchable: true, orderable: true },
+];
+
+const PAID_COLUMNS: DataTableColumn[] = [
+  { data: "invoice", searchable: false, orderable: false },
+  { data: "lastupdate", searchable: true, orderable: true },
+  { data: "nolayanan", searchable: true, orderable: true },
+  { data: "namapelanggan", searchable: true, orderable: true },
+  { data: "namaprofile", searchable: true, orderable: true },
+  { data: "mitra", searchable: true, orderable: true },
+  { data: "namakategoriinvoice", searchable: true, orderable: true },
+  { data: "tglbayar", searchable: true, orderable: true },
+  { data: "biller", searchable: true, orderable: true },
+  { data: "carabayar", searchable: true, orderable: true },
+  { data: "namachannel", searchable: true, orderable: true },
+  { data: "paycode", searchable: true, orderable: true },
+  { data: "subtotal", searchable: false, orderable: false },
+  { data: "diskon", searchable: false, orderable: false },
+  { data: "ppn", searchable: true, orderable: true },
+  { data: "adm", searchable: true, orderable: true },
+  { data: "kodeunik", searchable: true, orderable: true },
+  { data: "total", searchable: true, orderable: true },
+  { data: "catatan", searchable: true, orderable: true },
+];
+
+const CUSTOMER_COLUMNS: DataTableColumn[] = [
+  { data: "nolayanan", searchable: false, orderable: false },
+  { data: "username", searchable: false, orderable: false },
+  { data: "nourut", searchable: false, orderable: false },
+  { data: "namapelanggan", searchable: false, orderable: true },
+  { data: "namasubkategori", searchable: false, orderable: true },
+  { data: "namaprofile", searchable: false, orderable: true },
+  { data: "jenisbilling", searchable: false, orderable: true },
+  { data: "siklusbilling", searchable: false, orderable: true },
+  { data: "tglaktif", searchable: false, orderable: true },
+  { data: "tglisolir", searchable: false, orderable: true },
+  { data: "username", searchable: false, orderable: true },
+  { data: "password", searchable: false, orderable: true },
+  { data: "shortname", searchable: false, orderable: true },
+  { data: "servername", searchable: false, orderable: true },
+  { data: "addresslist", searchable: false, orderable: true },
+  { data: "lastipaddress", searchable: false, orderable: true },
+  { data: "mac", searchable: false, orderable: true },
+  { data: "namawilayah", searchable: false, orderable: true },
+  { data: "alamatpemasangan", searchable: false, orderable: true },
+  { data: "tgldaftar", searchable: false, orderable: true },
+  { data: "fullname", searchable: false, orderable: true },
+  { data: "kodeunik", searchable: false, orderable: true },
+  { data: "catatan", searchable: false, orderable: true },
+];
+
+/**
+ * Common Headers Helper
+ */
+const getHeaders = (cookie: string, contentType?: string) => {
+  const headers: Record<string, string> = {
+    Accept: "application/json, text/javascript, */*; q=0.01",
+    "X-Requested-With": "XMLHttpRequest",
+    Cookie: cookie,
+  };
+  if (contentType) headers["Content-Type"] = contentType;
+  return headers;
+};
+
+/**
+ * API Fetchers
+ */
 export const httpGetHomeCustomer = async (): Promise<HomeCustomer | null> => {
-  const cookie = await getCookieTungkaLilirAdmin();
-  if (cookie) {
+  try {
+    const cookie = await getCookieTungkaLilirAdmin();
+    if (!cookie) return null;
+
     const response = await CapacitorHttp.get({
-      url: "https://tungkalilir.rlradius.app/home/data",
-      headers: {
-        Accept: "application/json, text/javascript, */*; q=0.01",
-        "X-Requested-With": "XMLHttpRequest",
-        Cookie: cookie,
-      },
+      url: `${API_CONFIG.BASE_URL}/home/data`,
+      headers: getHeaders(cookie),
     });
 
-    return JSON.parse(response.data) as HomeCustomer;
+    return validateHttpResponse(response, "GetHomeCustomer");
+  } catch (error) {
+    console.error("httpGetHomeCustomer failed:", error);
+    return null;
   }
-
-  return null;
 };
 
 export const httpGetProfileCustomer = async (
   params: RequestCustomerParams,
 ): Promise<DataTableResponse<ProfileCustomerItem> | null> => {
-  const cookie = await getCookieTungkaLilirAdmin();
-  if (cookie) {
-    const response = await CapacitorHttp.post({
-      url: "https://tungkalilir.rlradius.app/pelanggan/data",
-      headers: {
-        Accept: "application/json, text/javascript, */*; q=0.01",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "X-Requested-With": "XMLHttpRequest",
-        Cookie: cookie,
-      },
+  try {
+    const cookie = await getCookieTungkaLilirAdmin();
+    if (!cookie) return null;
 
-      data: new URLSearchParams({
-        draw: "1",
-        "columns[0][data]": "id",
-        "columns[0][name]": "",
-        "columns[0][searchable]": "true",
-        "columns[0][orderable]": "false",
-        "columns[0][search][value]": "",
-        "columns[0][search][regex]": "false",
-
-        "columns[1][data]": "id",
-        "columns[1][name]": "",
-        "columns[1][searchable]": "true",
-        "columns[1][orderable]": "true",
-        "columns[1][search][value]": "",
-        "columns[1][search][regex]": "false",
-
-        "columns[2][data]": "namapelanggan",
-        "columns[2][name]": "",
-        "columns[2][searchable]": "true",
-        "columns[2][orderable]": "true",
-        "columns[2][search][value]": "",
-        "columns[2][search][regex]": "false",
-
-        "columns[3][data]": "phone",
-        "columns[3][name]": "",
-        "columns[3][searchable]": "true",
-        "columns[3][orderable]": "false",
-        "columns[3][search][value]": "",
-        "columns[3][search][regex]": "false",
-
-        "columns[4][data]": "alamat",
-        "columns[4][name]": "",
-        "columns[4][searchable]": "true",
-        "columns[4][orderable]": "false",
-        "columns[4][search][value]": "",
-        "columns[4][search][regex]": "false",
-
-        "columns[5][data]": "saldo",
-        "columns[5][name]": "",
-        "columns[5][searchable]": "true",
-        "columns[5][orderable]": "false",
-        "columns[5][search][value]": "",
-        "columns[5][search][regex]": "false",
-
-        "columns[6][data]": "fullname",
-        "columns[6][name]": "",
-        "columns[6][searchable]": "true",
-        "columns[6][orderable]": "true",
-        "columns[6][search][value]": "",
-        "columns[6][search][regex]": "false",
-
-        "columns[7][data]": "phone",
-        "columns[7][name]": "",
-        "columns[7][searchable]": "true",
-        "columns[7][orderable]": "false",
-        "columns[7][search][value]": "",
-        "columns[7][search][regex]": "false",
-
-        "order[0][column]": "1",
-        "order[0][dir]": "desc",
-
-        start: (params?.start ?? 0).toString(),
-        length: (params?.length ?? 25).toString(),
-
-        "search[value]": params?.search ?? "",
-        "search[regex]": "false",
-      }).toString(),
+    const data = buildDataTableParams({
+      columns: PROFILE_COLUMNS,
+      start: params?.start ?? 0,
+      length: params?.length ?? LIST_CONFIG.DEFAULT_PAGE_SIZE,
+      search: params?.search ?? "",
+      order: [{ column: 1, dir: "desc" }],
     });
 
-    return response.status == 200
-      ? typeof response.data == "string"
-        ? JSON.parse(response.data)
-        : response.data
-      : null;
-  }
+    const response = await CapacitorHttp.post({
+      url: `${API_CONFIG.BASE_URL}/pelanggan/data`,
+      headers: getHeaders(cookie, "application/x-www-form-urlencoded; charset=UTF-8"),
+      data: data.toString(),
+    });
 
-  return null;
+    return validateHttpResponse(response, "GetProfileCustomer");
+  } catch (error) {
+    console.error("httpGetProfileCustomer failed:", error);
+    return null;
+  }
 };
 
 export const httpGetUnpaidCustomer = async (
   params: RequestCustomerParams,
 ): Promise<DataTableResponse<UnpaidCustomerItem> | null> => {
-  const cookie = await getCookieTungkaLilirAdmin();
-  if (cookie) {
+  try {
+    const cookie = await getCookieTungkaLilirAdmin();
+    if (!cookie) return null;
+
+    const data = buildDataTableParams({
+      columns: UNPAID_COLUMNS,
+      start: params?.start ?? 0,
+      length: params?.length ?? LIST_CONFIG.DEFAULT_PAGE_SIZE,
+      search: params?.search ?? "",
+      order: [{ column: 2, dir: "desc" }],
+    });
+    data.append("status", "1");
+
     const response = await CapacitorHttp.post({
-      url: "https://tungkalilir.rlradius.app/invoice/unpaid/data",
-      headers: {
-        Accept: "application/json, text/javascript, */*; q=0.01",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "X-Requested-With": "XMLHttpRequest",
-        Cookie: cookie,
-      },
-
-      data: new URLSearchParams({
-        draw: "1",
-
-        "columns[0][data]": "invoice",
-        "columns[0][name]": "",
-        "columns[0][searchable]": "true",
-        "columns[0][orderable]": "false",
-        "columns[0][search][value]": "",
-        "columns[0][search][regex]": "false",
-
-        "columns[1][data]": "tgltempo",
-        "columns[1][name]": "",
-        "columns[1][searchable]": "true",
-        "columns[1][orderable]": "true",
-        "columns[1][search][value]": "",
-        "columns[1][search][regex]": "false",
-
-        "columns[2][data]": "invoice",
-        "columns[2][name]": "",
-        "columns[2][searchable]": "true",
-        "columns[2][orderable]": "true",
-        "columns[2][search][value]": "",
-        "columns[2][search][regex]": "false",
-
-        "columns[3][data]": "nolayanan",
-        "columns[3][name]": "",
-        "columns[3][searchable]": "true",
-        "columns[3][orderable]": "true",
-        "columns[3][search][value]": "",
-        "columns[3][search][regex]": "false",
-
-        "columns[4][data]": "namapelanggan",
-        "columns[4][name]": "",
-        "columns[4][searchable]": "true",
-        "columns[4][orderable]": "true",
-        "columns[4][search][value]": "",
-        "columns[4][search][regex]": "false",
-
-        "columns[5][data]": "namaprofile",
-        "columns[5][name]": "",
-        "columns[5][searchable]": "true",
-        "columns[5][orderable]": "true",
-        "columns[5][search][value]": "",
-        "columns[5][search][regex]": "false",
-
-        "columns[6][data]": "fullname",
-        "columns[6][name]": "",
-        "columns[6][searchable]": "true",
-        "columns[6][orderable]": "true",
-        "columns[6][search][value]": "",
-        "columns[6][search][regex]": "false",
-
-        "columns[7][data]": "namakategoriinvoice",
-        "columns[7][name]": "",
-        "columns[7][searchable]": "true",
-        "columns[7][orderable]": "true",
-        "columns[7][search][value]": "",
-        "columns[7][search][regex]": "false",
-
-        "columns[8][data]": "tglterbit",
-        "columns[8][name]": "",
-        "columns[8][searchable]": "true",
-        "columns[8][orderable]": "true",
-        "columns[8][search][value]": "",
-        "columns[8][search][regex]": "false",
-
-        "columns[9][data]": "tgltempo",
-        "columns[9][name]": "",
-        "columns[9][searchable]": "true",
-        "columns[9][orderable]": "true",
-        "columns[9][search][value]": "",
-        "columns[9][search][regex]": "false",
-
-        "columns[10][data]": "subtotal",
-        "columns[10][name]": "",
-        "columns[10][searchable]": "true",
-        "columns[10][orderable]": "true",
-        "columns[10][search][value]": "",
-        "columns[10][search][regex]": "false",
-
-        "columns[11][data]": "diskon",
-        "columns[11][name]": "",
-        "columns[11][searchable]": "true",
-        "columns[11][orderable]": "true",
-        "columns[11][search][value]": "",
-        "columns[11][search][regex]": "false",
-
-        "columns[12][data]": "ppn",
-        "columns[12][name]": "",
-        "columns[12][searchable]": "true",
-        "columns[12][orderable]": "true",
-        "columns[12][search][value]": "",
-        "columns[12][search][regex]": "false",
-
-        "columns[13][data]": "kodeunik",
-        "columns[13][name]": "",
-        "columns[13][searchable]": "true",
-        "columns[13][orderable]": "true",
-        "columns[13][search][value]": "",
-        "columns[13][search][regex]": "false",
-
-        "columns[14][data]": "total",
-        "columns[14][name]": "",
-        "columns[14][searchable]": "true",
-        "columns[14][orderable]": "true",
-        "columns[14][search][value]": "",
-        "columns[14][search][regex]": "false",
-
-        "columns[15][data]": "catatan",
-        "columns[15][name]": "",
-        "columns[15][searchable]": "true",
-        "columns[15][orderable]": "true",
-        "columns[15][search][value]": "",
-        "columns[15][search][regex]": "false",
-
-        "columns[16][data]": "tagih",
-        "columns[16][name]": "",
-        "columns[16][searchable]": "true",
-        "columns[16][orderable]": "true",
-        "columns[16][search][value]": "",
-        "columns[16][search][regex]": "false",
-
-        "order[0][column]": "2",
-        "order[0][dir]": "desc",
-
-        start: (params?.start ?? 0).toString(),
-        length: (params?.length ?? 25).toString(),
-
-        "search[value]": params?.search ?? "",
-        "search[regex]": "false",
-
-        status: "1",
-      }).toString(),
+      url: `${API_CONFIG.BASE_URL}/invoice/unpaid/data`,
+      headers: getHeaders(cookie, "application/x-www-form-urlencoded; charset=UTF-8"),
+      data: data.toString(),
     });
 
-    return response.status == 200
-      ? typeof response.data == "string"
-        ? JSON.parse(response.data)
-        : response.data
-      : null;
+    return validateHttpResponse(response, "GetUnpaidCustomer");
+  } catch (error) {
+    console.error("httpGetUnpaidCustomer failed:", error);
+    return null;
   }
-
-  return null;
 };
 
 export const httpGetPaidCustomer = async (
   params: RequestCustomerParams,
 ): Promise<DataTableResponse<PaidCustomerItem> | null> => {
-  const cookie = await getCookieTungkaLilirAdmin();
-  if (cookie) {
-    const response = await CapacitorHttp.post({
-      url: "https://tungkalilir.rlradius.app/invoice/paid/data",
-      headers: {
-        Accept: "application/json, text/javascript, */*; q=0.01",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "X-Requested-With": "XMLHttpRequest",
-        Cookie: cookie,
-      },
-      data: new URLSearchParams({
-        draw: "1",
+  try {
+    const cookie = await getCookieTungkaLilirAdmin();
+    if (!cookie) return null;
 
-        "columns[0][data]": "invoice",
-        "columns[0][name]": "",
-        "columns[0][searchable]": "false",
-        "columns[0][orderable]": "false",
-        "columns[0][search][value]": "",
-        "columns[0][search][regex]": "false",
-
-        "columns[1][data]": "lastupdate",
-        "columns[1][name]": "",
-        "columns[1][searchable]": "true",
-        "columns[1][orderable]": "true",
-        "columns[1][search][value]": "",
-        "columns[1][search][regex]": "false",
-
-        "columns[2][data]": "nolayanan",
-        "columns[2][name]": "",
-        "columns[2][searchable]": "true",
-        "columns[2][orderable]": "true",
-        "columns[2][search][value]": "",
-        "columns[2][search][regex]": "false",
-
-        "columns[3][data]": "namapelanggan",
-        "columns[3][name]": "",
-        "columns[3][searchable]": "true",
-        "columns[3][orderable]": "true",
-        "columns[3][search][value]": "",
-        "columns[3][search][regex]": "false",
-
-        "columns[4][data]": "namaprofile",
-        "columns[4][name]": "",
-        "columns[4][searchable]": "true",
-        "columns[4][orderable]": "true",
-        "columns[4][search][value]": "",
-        "columns[4][search][regex]": "false",
-
-        "columns[5][data]": "mitra",
-        "columns[5][name]": "",
-        "columns[5][searchable]": "true",
-        "columns[5][orderable]": "true",
-        "columns[5][search][value]": "",
-        "columns[5][search][regex]": "false",
-
-        "columns[6][data]": "namakategoriinvoice",
-        "columns[6][name]": "",
-        "columns[6][searchable]": "true",
-        "columns[6][orderable]": "true",
-        "columns[6][search][value]": "",
-        "columns[6][search][regex]": "false",
-
-        "columns[7][data]": "tglbayar",
-        "columns[7][name]": "",
-        "columns[7][searchable]": "true",
-        "columns[7][orderable]": "true",
-        "columns[7][search][value]": "",
-        "columns[7][search][regex]": "false",
-
-        "columns[8][data]": "biller",
-        "columns[8][name]": "",
-        "columns[8][searchable]": "true",
-        "columns[8][orderable]": "true",
-        "columns[8][search][value]": "",
-        "columns[8][search][regex]": "false",
-
-        "columns[9][data]": "carabayar",
-        "columns[9][name]": "",
-        "columns[9][searchable]": "true",
-        "columns[9][orderable]": "true",
-        "columns[9][search][value]": "",
-        "columns[9][search][regex]": "false",
-
-        "columns[10][data]": "namachannel",
-        "columns[10][name]": "",
-        "columns[10][searchable]": "true",
-        "columns[10][orderable]": "true",
-        "columns[10][search][value]": "",
-        "columns[10][search][regex]": "false",
-
-        "columns[11][data]": "paycode",
-        "columns[11][name]": "",
-        "columns[11][searchable]": "true",
-        "columns[11][orderable]": "true",
-        "columns[11][search][value]": "",
-        "columns[11][search][regex]": "false",
-
-        "columns[12][data]": "subtotal",
-        "columns[12][name]": "",
-        "columns[12][searchable]": "false",
-        "columns[12][orderable]": "false",
-        "columns[12][search][value]": "",
-        "columns[12][search][regex]": "false",
-
-        "columns[13][data]": "diskon",
-        "columns[13][name]": "",
-        "columns[13][searchable]": "false",
-        "columns[13][orderable]": "false",
-        "columns[13][search][value]": "",
-        "columns[13][search][regex]": "false",
-
-        "columns[14][data]": "ppn",
-        "columns[14][name]": "",
-        "columns[14][searchable]": "true",
-        "columns[14][orderable]": "true",
-        "columns[14][search][value]": "",
-        "columns[14][search][regex]": "false",
-
-        "columns[15][data]": "adm",
-        "columns[15][name]": "",
-        "columns[15][searchable]": "true",
-        "columns[15][orderable]": "true",
-        "columns[15][search][value]": "",
-        "columns[15][search][regex]": "false",
-
-        "columns[16][data]": "kodeunik",
-        "columns[16][name]": "",
-        "columns[16][searchable]": "true",
-        "columns[16][orderable]": "true",
-        "columns[16][search][value]": "",
-        "columns[16][search][regex]": "false",
-
-        "columns[17][data]": "total",
-        "columns[17][name]": "",
-        "columns[17][searchable]": "true",
-        "columns[17][orderable]": "true",
-        "columns[17][search][value]": "",
-        "columns[17][search][regex]": "false",
-
-        "columns[18][data]": "catatan",
-        "columns[18][name]": "",
-        "columns[18][searchable]": "true",
-        "columns[18][orderable]": "true",
-        "columns[18][search][value]": "",
-        "columns[18][search][regex]": "false",
-
-        "order[0][column]": "1",
-        "order[0][dir]": "desc",
-
-        start: (params?.start ?? 0).toString(),
-        length: (params?.length ?? 25).toString(),
-
-        "search[value]": params?.search ?? "",
-        "search[regex]": "false",
-
-        bulan: String(new Date().getMonth() + 1).padStart(2, "0"),
-        tahun: String(new Date().getFullYear()),
-      }).toString(),
+    const data = buildDataTableParams({
+      columns: PAID_COLUMNS,
+      start: params?.start ?? 0,
+      length: params?.length ?? LIST_CONFIG.DEFAULT_PAGE_SIZE,
+      search: params?.search ?? "",
+      order: [{ column: 1, dir: "desc" }],
     });
 
-    return response.status == 200
-      ? typeof response.data == "string"
-        ? JSON.parse(response.data)
-        : response.data
-      : null;
-  }
+    data.append("bulan", String(new Date().getMonth() + 1).padStart(2, "0"));
+    data.append("tahun", String(new Date().getFullYear()));
 
-  return null;
+    const response = await CapacitorHttp.post({
+      url: `${API_CONFIG.BASE_URL}/invoice/paid/data`,
+      headers: getHeaders(cookie, "application/x-www-form-urlencoded; charset=UTF-8"),
+      data: data.toString(),
+    });
+
+    return validateHttpResponse(response, "GetPaidCustomer");
+  } catch (error) {
+    console.error("httpGetPaidCustomer failed:", error);
+    return null;
+  }
 };
 
 export const httpGetCustomer = async (
   params?: RequestCustomerParams,
 ): Promise<DataTableResponse<Customer> | null> => {
-  const cookie = await getCookieTungkaLilirAdmin();
-  if (cookie) {
-    const dataURL = new URLSearchParams({
-      draw: "1",
+  try {
+    const cookie = await getCookieTungkaLilirAdmin();
+    if (!cookie) return null;
 
-      "columns[0][data]": "nolayanan",
-      "columns[0][name]": "",
-      "columns[0][searchable]": "false",
-      "columns[0][orderable]": "false",
-      "columns[0][search][value]": "",
-      "columns[0][search][regex]": "false",
-
-      "columns[1][data]": "username",
-      "columns[1][name]": "",
-      "columns[1][searchable]": "false",
-      "columns[1][orderable]": "false",
-      "columns[1][search][value]": "",
-      "columns[1][search][regex]": "false",
-
-      "columns[2][data]": "nourut",
-      "columns[2][name]": "",
-      "columns[2][searchable]": "false",
-      "columns[2][orderable]": "false",
-      "columns[2][search][value]": "",
-      "columns[2][search][regex]": "false",
-
-      "columns[3][data]": "namapelanggan",
-      "columns[3][name]": "",
-      "columns[3][searchable]": "false",
-      "columns[3][orderable]": "true",
-      "columns[3][search][value]": "",
-      "columns[3][search][regex]": "false",
-
-      "columns[4][data]": "namasubkategori",
-      "columns[4][name]": "",
-      "columns[4][searchable]": "false",
-      "columns[4][orderable]": "true",
-      "columns[4][search][value]": "",
-      "columns[4][search][regex]": "false",
-
-      "columns[5][data]": "namaprofile",
-      "columns[5][name]": "",
-      "columns[5][searchable]": "false",
-      "columns[5][orderable]": "true",
-      "columns[5][search][value]": "",
-      "columns[5][search][regex]": "false",
-
-      "columns[6][data]": "jenisbilling",
-      "columns[6][name]": "",
-      "columns[6][searchable]": "false",
-      "columns[6][orderable]": "true",
-      "columns[6][search][value]": "",
-      "columns[6][search][regex]": "false",
-
-      "columns[7][data]": "siklusbilling",
-      "columns[7][name]": "",
-      "columns[7][searchable]": "false",
-      "columns[7][orderable]": "true",
-      "columns[7][search][value]": "",
-      "columns[7][search][regex]": "false",
-
-      "columns[8][data]": "tglaktif",
-      "columns[8][name]": "",
-      "columns[8][searchable]": "false",
-      "columns[8][orderable]": "true",
-      "columns[8][search][value]": "",
-      "columns[8][search][regex]": "false",
-
-      "columns[9][data]": "tglisolir",
-      "columns[9][name]": "",
-      "columns[9][searchable]": "false",
-      "columns[9][orderable]": "true",
-      "columns[9][search][value]": "",
-      "columns[9][search][regex]": "false",
-
-      "columns[10][data]": "username",
-      "columns[10][name]": "",
-      "columns[10][searchable]": "false",
-      "columns[10][orderable]": "true",
-      "columns[10][search][value]": "",
-      "columns[10][search][regex]": "false",
-
-      "columns[11][data]": "password",
-      "columns[11][name]": "",
-      "columns[11][searchable]": "false",
-      "columns[11][orderable]": "true",
-      "columns[11][search][value]": "",
-      "columns[11][search][regex]": "false",
-
-      "columns[12][data]": "shortname",
-      "columns[12][name]": "",
-      "columns[12][searchable]": "false",
-      "columns[12][orderable]": "true",
-      "columns[12][search][value]": "",
-      "columns[12][search][regex]": "false",
-
-      "columns[13][data]": "servername",
-      "columns[13][name]": "",
-      "columns[13][searchable]": "false",
-      "columns[13][orderable]": "true",
-      "columns[13][search][value]": "",
-      "columns[13][search][regex]": "false",
-
-      "columns[14][data]": "addresslist",
-      "columns[14][name]": "",
-      "columns[14][searchable]": "false",
-      "columns[14][orderable]": "true",
-      "columns[14][search][value]": "",
-      "columns[14][search][regex]": "false",
-
-      "columns[15][data]": "lastipaddress",
-      "columns[15][name]": "",
-      "columns[15][searchable]": "false",
-      "columns[15][orderable]": "true",
-      "columns[15][search][value]": "",
-      "columns[15][search][regex]": "false",
-
-      "columns[16][data]": "mac",
-      "columns[16][name]": "",
-      "columns[16][searchable]": "false",
-      "columns[16][orderable]": "true",
-      "columns[16][search][value]": "",
-      "columns[16][search][regex]": "false",
-
-      "columns[17][data]": "namawilayah",
-      "columns[17][name]": "",
-      "columns[17][searchable]": "false",
-      "columns[17][orderable]": "true",
-      "columns[17][search][value]": "",
-      "columns[17][search][regex]": "false",
-
-      "columns[18][data]": "alamatpemasangan",
-      "columns[18][name]": "",
-      "columns[18][searchable]": "false",
-      "columns[18][orderable]": "true",
-      "columns[18][search][value]": "",
-      "columns[18][search][regex]": "false",
-
-      "columns[19][data]": "tgldaftar",
-      "columns[19][name]": "",
-      "columns[19][searchable]": "false",
-      "columns[19][orderable]": "true",
-      "columns[19][search][value]": "",
-      "columns[19][search][regex]": "false",
-
-      "columns[20][data]": "fullname",
-      "columns[20][name]": "",
-      "columns[20][searchable]": "false",
-      "columns[20][orderable]": "true",
-      "columns[20][search][value]": "",
-      "columns[20][search][regex]": "false",
-
-      "columns[21][data]": "kodeunik",
-      "columns[21][name]": "",
-      "columns[21][searchable]": "false",
-      "columns[21][orderable]": "true",
-      "columns[21][search][value]": "",
-      "columns[21][search][regex]": "false",
-
-      "columns[22][data]": "catatan",
-      "columns[22][name]": "",
-      "columns[22][searchable]": "false",
-      "columns[22][orderable]": "true",
-      "columns[22][search][value]": "",
-      "columns[22][search][regex]": "false",
-
-      "order[0][column]": "2",
-      "order[0][dir]": "desc",
-
-      start: (params?.start ?? 0).toString(),
-      length: (params?.length ?? 25).toString(),
-
-      "search[value]": params?.search ?? "",
-      "search[regex]": "false",
-
-      nas: "",
-      profile: "",
-      status: "0",
-      mitra: "",
+    const data = buildDataTableParams({
+      columns: CUSTOMER_COLUMNS,
+      start: params?.start ?? 0,
+      length: params?.length ?? LIST_CONFIG.DEFAULT_PAGE_SIZE,
+      search: params?.search ?? "",
+      order: [{ column: 2, dir: "desc" }],
     });
+
+    data.append("nas", "");
+    data.append("profile", "");
+    data.append("status", "0");
+    data.append("mitra", "");
+
     const response = await CapacitorHttp.post({
-      url: "https://tungkalilir.rlradius.app/berlangganan/data",
-      headers: {
-        Accept: "application/json, text/javascript, */*; q=0.01",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "X-Requested-With": "XMLHttpRequest",
-        Cookie: cookie,
-      },
-      data: dataURL.toString(),
+      url: `${API_CONFIG.BASE_URL}/berlangganan/data`,
+      headers: getHeaders(cookie, "application/x-www-form-urlencoded; charset=UTF-8"),
+      data: data.toString(),
     });
 
-    return response.status == 200
-      ? typeof response.data == "string"
-        ? JSON.parse(response.data)
-        : response.data
-      : null;
+    return validateHttpResponse(response, "GetCustomer");
+  } catch (error) {
+    console.error("httpGetCustomer failed:", error);
+    return null;
   }
-
-  return null;
 };
 
 export const httpGetAllCustomer = async (): Promise<Array<Customer>> => {
   const allDataCustomers = [];
   let res: DataTableResponse<Customer> | null = null;
-
   let startDraw = 0;
   const lengthDraw = 100;
 
   do {
-    res = await httpGetCustomer({
-      start: startDraw,
-      length: lengthDraw,
-    });
-
-    allDataCustomers.push(...(res?.data ?? []));
-    startDraw += lengthDraw;
-  } while (res?.data.length != 0);
+    res = await httpGetCustomer({ start: startDraw, length: lengthDraw });
+    if (res?.data) {
+      allDataCustomers.push(...res.data);
+      startDraw += lengthDraw;
+    }
+  } while (res && res.data && res.data.length > 0);
 
   return allDataCustomers;
 };
 
+/**
+ * Result Interface for Hook
+ */
 export type ResultUseCustomer = {
   customers: Customer[];
   filteredCustomers: Customer[];
@@ -689,46 +282,191 @@ export type ResultUseCustomer = {
   totalCustomer: number;
   totalPaidCustomer: number;
   totalUnpaidCustomer: number;
-  setTabFilter: Dispatch<SetStateAction<"UNPAID" | "PAID" | "ALL">>;
+  countUnpaidNotSyncCustomer: number;
+  countNewCustomer: number;
+  totalIsolirCustomer: number;
+  setTabFilter: Dispatch<SetStateAction<FilterCustomerStatus>>;
   setSearchFilter: Dispatch<SetStateAction<string>>;
   syncAllCustomers(): Promise<void>;
   reqAllCustomers(resync: boolean): Promise<void>;
 };
 
+/**
+ * Main Hook: useCustomer
+ */
 export const useCustomer = (): ResultUseCustomer => {
   const [customers, setCustomers] = useState<Array<Customer>>([]);
   const [totalCustomer, setTotalCustomer] = useState<number>(0);
   const [totalPaidCustomer, setTotalPaidCustomer] = useState<number>(0);
+  const [countUnpaidNotSyncCustomer, setCountUnpaidNotSyncCustomer] = useState<number>(0);
+  const [countNewCustomer, setCountNewCustomer] = useState<number>(0);
   const [totalUnpaidCustomer, setTotalUnpaidCustomer] = useState<number>(0);
+  const [totalIsolirCustomer, setTotalIsolirCustomer] = useState<number>(0);
 
-  const [tabFilter, setTabFilter] = useState<"UNPAID" | "PAID" | "ALL">(
-    "UNPAID",
-  );
+  const [tabFilter, setTabFilter] = useState<FilterCustomerStatus>("UNPAID");
   const [searchFilter, setSearchFilter] = useState<string>("");
 
+  /**
+   * Filtered Data Memo (Matching original logic exactly)
+   */
   const filteredCustomers = useMemo(() => {
     let dataFilter = customers;
 
     dataFilter = dataFilter.filter(
       (customer) =>
-        customer.namapelanggan
-          .toLowerCase()
-          .includes(searchFilter.toLowerCase()) ||
+        customer.namapelanggan.toLowerCase().includes(searchFilter.toLowerCase()) ||
         customer.nolayanan.includes(searchFilter) ||
-        customer.unpaid?.invoice
-          .toLowerCase()
-          .includes(searchFilter.toLowerCase()),
+        customer.unpaid?.invoice.toLowerCase().includes(searchFilter.toLowerCase()),
     );
 
     if (tabFilter === "UNPAID") {
       dataFilter = dataFilter.filter((c) => !c.ispaid);
-    }
-    if (tabFilter === "PAID") {
+    } else if (tabFilter === "PAID") {
       dataFilter = dataFilter.filter((c) => c.ispaid);
+    } else if (tabFilter === "PAID_NO_SYNC") {
+      dataFilter = dataFilter.filter((c) => c.ispaid && !c.payment);
+    } else if (tabFilter === "NEW") {
+      dataFilter = dataFilter.filter((c) => !c.ispaid && !c.paid);
+    } else if (tabFilter === "ISOLIR") {
+      dataFilter = dataFilter.filter((c) => !c.aktif);
     }
 
     return dataFilter;
   }, [customers, tabFilter, searchFilter]);
+
+  /**
+   * Data Loading Logic (Matching original logic exactly)
+   */
+  const reqAllCustomers = async (resync: boolean = false) => {
+    try {
+      const check = await httpGetHomeCustomer();
+      if (!check) return;
+
+      const length = (check?.expired ?? 0) + (check.totallanggananonline ?? 0);
+
+      let allDataCustomers: Array<Customer> = [];
+      let allDataCustomerPayments: Array<PaymentCustomer> = [];
+      let dtUnpaidCustomer: DataTableResponse<UnpaidCustomerItem> | null = null;
+      let dtProfileCustomer: DataTableResponse<ProfileCustomerItem> | null = null;
+      let dtPaidCustomer: DataTableResponse<PaidCustomerItem> | null = null;
+
+      // 1. Fetch main customers list
+      let pref = await Preferences.get({ key: "allDataCustomers" });
+      if (pref.value && !resync) {
+        allDataCustomers = JSON.parse(pref.value);
+      } else {
+        allDataCustomers = await httpGetAllCustomer();
+        await Preferences.set({
+          key: "allDataCustomers",
+          value: JSON.stringify(allDataCustomers),
+        });
+      }
+
+      // 2. Fetch payments from Google Script
+      pref = await Preferences.get({ key: "allDataCustomerPayments" });
+      if (pref.value && !resync) {
+        allDataCustomerPayments = JSON.parse(pref.value);
+      } else {
+        allDataCustomerPayments = await HttpPaymentApi.getAll();
+        await Preferences.set({
+          key: "allDataCustomerPayments",
+          value: JSON.stringify(allDataCustomerPayments),
+        });
+      }
+
+      // 3. Fetch enrichment data (Profile, Unpaid, Paid)
+      pref = await Preferences.get({ key: "dtProfileCustomer" });
+      if (pref.value && !resync) {
+        dtProfileCustomer = JSON.parse(pref.value);
+      } else {
+        dtProfileCustomer = await httpGetProfileCustomer({ length });
+        await Preferences.set({
+          key: "dtProfileCustomer",
+          value: JSON.stringify(dtProfileCustomer),
+        });
+      }
+
+      pref = await Preferences.get({ key: "dtUnpaidCustomer" });
+      if (pref.value && !resync) {
+        dtUnpaidCustomer = JSON.parse(pref.value);
+      } else {
+        dtUnpaidCustomer = await httpGetUnpaidCustomer({ length });
+        await Preferences.set({
+          key: "dtUnpaidCustomer",
+          value: JSON.stringify(dtUnpaidCustomer),
+        });
+      }
+
+      pref = await Preferences.get({ key: "dtPaidCustomer" });
+      if (pref.value && !resync) {
+        dtPaidCustomer = JSON.parse(pref.value);
+      } else {
+        dtPaidCustomer = await httpGetPaidCustomer({ length });
+        await Preferences.set({
+          key: "dtPaidCustomer",
+          value: JSON.stringify(dtPaidCustomer),
+        });
+      }
+
+      // 4. Merging and stats calculation
+      if (allDataCustomers.length > 0 && dtProfileCustomer && dtPaidCustomer && dtUnpaidCustomer) {
+        const profileMap = new Map(dtProfileCustomer.data.map((item) => [item.id, item]));
+        const unpaidMap = new Map(dtUnpaidCustomer.data.map((item) => [item.nolayanan, item]));
+        const paidMap = new Map(dtPaidCustomer.data.map((item) => [item.nolayanan, item]));
+        const paymentMap = new Map(allDataCustomerPayments.map((item) => [item.nolayanan.toString(), item]));
+
+        let countAllData = 0;
+        let countPaidCustomer = 0;
+        let countUnpaidNotSyncCustomer = 0;
+        let countNewCustomer = 0;
+        let countUnpaidCustomer = 0;
+        let countIsolirCustomer = 0;
+
+        const merged: Array<Customer> = allDataCustomers
+          .map((cusItem) => {
+            cusItem.profile = profileMap.get(cusItem.pelanggan);
+            cusItem.unpaid = unpaidMap.get(cusItem.nolayanan);
+            cusItem.ispaid = !cusItem.unpaid;
+            cusItem.paid = paidMap.get(cusItem.nolayanan);
+            cusItem.payment = paymentMap.get(cusItem.nolayanan);
+
+            countAllData += 1;
+            if (cusItem.ispaid) countPaidCustomer += 1;
+            else countUnpaidCustomer += 1;
+
+            if (cusItem.ispaid && !cusItem.payment) countUnpaidNotSyncCustomer += 1;
+            if (!cusItem.unpaid && !cusItem.paid) countNewCustomer += 1;
+            if (!cusItem.aktif) countIsolirCustomer += 1;
+
+            return cusItem;
+          })
+          .sort((a, b) => {
+            if (!a.payment && !b.payment) return 0;
+            if (!a.payment) return 1;
+            if (!b.payment) return -1;
+
+            const aDateTime = new Date(
+              dateTimeConvertToString(new Date(a.payment.tanggalbayar), new Date(a.payment.waktubayar)),
+            );
+            const bDateTime = new Date(
+              dateTimeConvertToString(new Date(b.payment.tanggalbayar), new Date(b.payment.waktubayar)),
+            );
+
+            return bDateTime.getTime() - aDateTime.getTime();
+          });
+
+        setCustomers(merged);
+        setTotalCustomer(countAllData);
+        setTotalPaidCustomer(countPaidCustomer);
+        setCountUnpaidNotSyncCustomer(countUnpaidNotSyncCustomer);
+        setCountNewCustomer(countNewCustomer);
+        setTotalUnpaidCustomer(countUnpaidCustomer);
+        setTotalIsolirCustomer(countIsolirCustomer);
+      }
+    } catch (error) {
+      console.error("[Error] reqAllCustomers: ", error);
+    }
+  };
 
   return {
     customers,
@@ -737,163 +475,12 @@ export const useCustomer = (): ResultUseCustomer => {
     totalCustomer,
     totalPaidCustomer,
     totalUnpaidCustomer,
+    countUnpaidNotSyncCustomer,
+    countNewCustomer,
+    totalIsolirCustomer,
     setTabFilter,
     setSearchFilter,
-    async syncAllCustomers() { },
-    async reqAllCustomers(resync: boolean = false) {
-      try {
-        const check = await httpGetHomeCustomer();
-        if (!check) return;
-
-        const length =
-          (check?.expired ?? 0) + (check.totallanggananonline ?? 0);
-
-        let allDataCustomers: Array<Customer> = [];
-        let allDataCustomerPayments: Array<PaymentCustomer> = [];
-        let dtUnpaidCustomer: DataTableResponse<UnpaidCustomerItem> | null =
-          null;
-        let dtProfileCustomer: DataTableResponse<ProfileCustomerItem> | null =
-          null;
-        let dtPaidCustomer: DataTableResponse<PaidCustomerItem> | null = null;
-
-        let pref = await Preferences.get({
-          key: "allDataCustomers",
-        });
-
-        if (pref.value && !resync) {
-          allDataCustomers = JSON.parse(pref.value);
-        } else {
-          allDataCustomers = await httpGetAllCustomer();
-          await Preferences.set({
-            key: "allDataCustomers",
-            value: JSON.stringify(allDataCustomers),
-          });
-        }
-
-        pref = await Preferences.get({
-          key: "allDataCustomerPayments",
-        });
-        if (pref.value && !resync) {
-          allDataCustomerPayments = JSON.parse(pref.value);
-        } else {
-          allDataCustomerPayments = await HttpPaymentApi.getAll();
-          await Preferences.set({
-            key: "allDataCustomerPayments",
-            value: JSON.stringify(allDataCustomerPayments),
-          });
-        }
-
-        pref = await Preferences.get({
-          key: "dtProfileCustomer",
-        });
-        if (pref.value && !resync) {
-          dtProfileCustomer = JSON.parse(pref.value);
-        } else {
-          dtProfileCustomer = await httpGetProfileCustomer({ length });
-          await Preferences.set({
-            key: "dtProfileCustomer",
-            value: JSON.stringify(dtProfileCustomer),
-          });
-        }
-
-        pref = await Preferences.get({
-          key: "dtUnpaidCustomer",
-        });
-        if (pref.value && !resync) {
-          dtUnpaidCustomer = JSON.parse(pref.value);
-        } else {
-          dtUnpaidCustomer = await httpGetUnpaidCustomer({ length });
-          await Preferences.set({
-            key: "dtUnpaidCustomer",
-            value: JSON.stringify(dtUnpaidCustomer),
-          });
-        }
-
-        pref = await Preferences.get({
-          key: "dtPaidCustomer",
-        });
-        if (pref.value && !resync) {
-          dtPaidCustomer = JSON.parse(pref.value);
-        } else {
-          dtPaidCustomer = await httpGetPaidCustomer({ length });
-          await Preferences.set({
-            key: "dtPaidCustomer",
-            value: JSON.stringify(dtPaidCustomer),
-          });
-        }
-
-        if (
-          allDataCustomers.length > 0 &&
-          dtProfileCustomer &&
-          dtPaidCustomer &&
-          dtUnpaidCustomer
-        ) {
-          const profileMap = new Map(
-            dtProfileCustomer.data.map((item) => [item.id, item]),
-          );
-
-          const unpaidMap = new Map(
-            dtUnpaidCustomer.data.map((item) => [item.nolayanan, item]),
-          );
-
-          const paidMap = new Map(
-            dtPaidCustomer.data.map((item) => [item.nolayanan, item]),
-          );
-
-          const paymentMap = new Map(
-            allDataCustomerPayments.map((item) => [
-              item.nolayanan.toString(),
-              item,
-            ]),
-          );
-
-          let countAllData = 0;
-          let countPaidCustomer = 0;
-          let countUnpaidCustomer = 0;
-          const merged: Array<Customer> = allDataCustomers
-            .map((cusItem) => {
-              cusItem.profile = profileMap.get(cusItem.pelanggan);
-              cusItem.unpaid = unpaidMap.get(cusItem.nolayanan);
-              cusItem.ispaid = !cusItem.unpaid;
-              cusItem.paid = paidMap.get(cusItem.nolayanan);
-              cusItem.payment = paymentMap.get(cusItem.nolayanan);
-
-              countAllData += 1;
-              if (cusItem.ispaid) countPaidCustomer += 1;
-              else countUnpaidCustomer += 1;
-
-              return cusItem;
-            })
-            .sort((a, b) => {
-              if (!a.payment && !b.payment) return 0;
-              if (!a.payment) return 1;
-              if (!b.payment) return -1;
-
-              const aDateTime = new Date(
-                dateTimeConvertToString(
-                  new Date(a.payment.tanggalbayar),
-                  new Date(a.payment.waktubayar),
-                ),
-              );
-
-              const bDateTime = new Date(
-                dateTimeConvertToString(
-                  new Date(b.payment.tanggalbayar),
-                  new Date(b.payment.waktubayar),
-                ),
-              );
-
-              return bDateTime.getTime() - aDateTime.getTime();
-            });
-
-          setCustomers(merged);
-          setTotalCustomer(countAllData);
-          setTotalPaidCustomer(countPaidCustomer);
-          setTotalUnpaidCustomer(countUnpaidCustomer);
-        }
-      } catch (error) {
-        console.error("[Error] reqAllCustomers: ", error);
-      }
-    },
+    syncAllCustomers: async () => {},
+    reqAllCustomers,
   };
 };
