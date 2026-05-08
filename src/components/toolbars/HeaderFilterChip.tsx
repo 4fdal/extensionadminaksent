@@ -1,7 +1,8 @@
+import { FilterCustomerStatus } from "@/types/customer";
 import React, { useEffect, useState } from "react";
 
 export type Tab = {
-  key: "UNPAID" | "PAID" | "ALL";
+  key: FilterCustomerStatus;
   label: string;
   count: number;
 };

@@ -1,3 +1,5 @@
+export type FilterCustomerStatus = "ALL" | "PAID" | "PAID_NO_SYNC" | "NEW" | "UNPAID" | "ISOLIR";
+
 export type RequestCustomerParams = {
   start?: number;
   length?: number;

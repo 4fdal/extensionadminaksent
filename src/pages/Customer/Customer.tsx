@@ -195,6 +195,21 @@ const CustomerPage: React.FC = () => {
                 count: uc?.totalPaidCustomer ?? 0,
               },
               {
+                key: "PAID_NO_SYNC",
+                label: "Paid (Not Sync)",
+                count: uc?.countUnpaidNotSyncCustomer ?? 0,
+              },
+              {
+                key: "ISOLIR",
+                label: "Isolir",
+                count: uc?.totalIsolirCustomer ?? 0,
+              },
+              {
+                key: "NEW",
+                label: "New",
+                count: uc?.countNewCustomer ?? 0,
+              },
+              {
                 key: "ALL",
                 label: "Semua",
                 count: uc?.totalCustomer ?? 0,
