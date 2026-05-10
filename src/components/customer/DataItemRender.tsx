@@ -13,6 +13,8 @@ type DataItemRenderProp = {
   data: Array<Customer>;
   tab?: Tab | null;
   onClickDetail?: (cust: Customer) => void;
+  selectedNolayanan?: string[];
+  onSelectRow?: (nolayanan: string) => void;
 };
 
 const DataItemRender: React.FC<DataItemRenderProp> = (props) => {
@@ -40,6 +42,8 @@ const DataItemRender: React.FC<DataItemRenderProp> = (props) => {
           <div key={item.nolayanan} className="mb-2">
             <DetailCardCustomer
               customer={item}
+              isSelected={props.selectedNolayanan?.includes(item.nolayanan)}
+              onSelect={() => props.onSelectRow?.(item.nolayanan)}
               onClickDetail={() => {
                 if (props.onClickDetail) props.onClickDetail(item);
               }}

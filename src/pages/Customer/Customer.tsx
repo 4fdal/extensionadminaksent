@@ -28,6 +28,25 @@ const CustomerPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [tabFilter, setTabFilter] = useState<Tab | null>(null);
   const { customer: customerContext } = useAppContext();
+  const [selectedNolayanan, setSelectedNolayanan] = useState<string[]>([]);
+
+  const handleSelectAll = () => {
+    const allNolayanan =
+      customerContext?.filteredCustomers.map((c) => c.nolayanan) ?? [];
+    if (selectedNolayanan.length === allNolayanan.length && allNolayanan.length > 0) {
+      setSelectedNolayanan([]);
+    } else {
+      setSelectedNolayanan(allNolayanan);
+    }
+  };
+
+  const handleSelectRow = (nolayanan: string) => {
+    setSelectedNolayanan((prev) =>
+      prev.includes(nolayanan)
+        ? prev.filter((n) => n !== nolayanan)
+        : [...prev, nolayanan],
+    );
+  };
 
   const [modalCustDetail, setModalCustDetail] = useState<Customer | null>(null);
 
@@ -129,12 +148,22 @@ const CustomerPage: React.FC = () => {
         <DataList
           loading={loading}
           loadingMessage={customerContext?.loadingMessage}
-          dataNotFound={customerContext?.filteredCustomers.length == 0}
+          dataNotFound={(customerContext?.filteredCustomers?.length ?? 0) === 0}
+          totalData={customerContext?.filteredCustomers?.length ?? 0}
+          selectedCount={selectedNolayanan.length}
+          onSelectAll={handleSelectAll}
+          isAllSelected={
+            selectedNolayanan.length > 0 &&
+            selectedNolayanan.length ===
+              (customerContext?.filteredCustomers?.length ?? 0)
+          }
         >
           <DataItemRender
             onClickDetail={(item) => setModalCustDetail(item)}
             data={customerContext?.filteredCustomers ?? []}
             tab={tabFilter}
+            selectedNolayanan={selectedNolayanan}
+            onSelectRow={handleSelectRow}
           />
         </DataList>
 

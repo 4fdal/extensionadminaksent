@@ -1,6 +1,6 @@
 import { Customer } from "@/types/customer";
 import { formatRupiah, formatDate, dateTimeConvertToString } from "@/utils";
-import { IonIcon } from "@ionic/react";
+import { IonIcon, IonModal, IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonLabel, IonTextarea, IonButton, IonButtons } from "@ionic/react";
 import {
   alertCircleOutline,
   businessOutline,
@@ -11,8 +11,12 @@ import {
   homeOutline,
   personOutline,
   timeOutline,
+  chatboxEllipsesOutline,
+  checkmarkOutline,
+  closeCircleOutline,
+  warningOutline,
 } from "ionicons/icons";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { differenceInDays } from "date-fns";
 import { useHistory } from "react-router";
 import { AppLauncher } from "@capacitor/app-launcher";
@@ -21,6 +25,8 @@ import { sendBilToWhatsapp } from "@/utils/payment";
 type DetailCardCustomerProp = {
   customer?: Customer;
   onClickDetail?: () => void | undefined;
+  isSelected?: boolean;
+  onSelect?: () => void;
 };
 
 const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
@@ -38,6 +44,29 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
       isOverdue: now > isolirDate,
     };
   }, [customer?.tglisolir]);
+  const [showComplaintModal, setShowComplaintModal] = useState<boolean>(false);
+  const [complaintText, setComplaintText] = useState<string>("");
+
+  const sendComplaintToWhatsapp = async () => {
+    if (!props.customer || !complaintText) return;
+
+    const message = `Halo, saya ingin melaporkan keluhan untuk pelanggan:
+Nama: ${props.customer.namapelanggan}
+Layanan: ${props.customer.nolayanan}
+Keluhan: ${complaintText}`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const phone = props.customer.profile?.phone;
+    const formattedPhone = phone ? `62${phone.substring(1)}` : "";
+
+    if (formattedPhone) {
+      await AppLauncher.openUrl({
+        url: `whatsapp://send?phone=${formattedPhone}&text=${encodedMessage}`,
+      });
+    }
+    setShowComplaintModal(false);
+    setComplaintText("");
+  };
 
   const statusLabel = useMemo(() => {
     if (customer?.isolirmanual) return "Isolir";
@@ -62,10 +91,25 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
 
       {/* Card Header - Status & Invoice */}
       <div
-        className={`px-4 pt-3 pb-2 border-b cursor-pointer`}
+        className={`px-4 pt-3 pb-2 border-b cursor-pointer flex items-center gap-3`}
         onClick={() => {}}
       >
-        <div className="flex items-center justify-between pl-2 pr-1">
+        {props.onSelect && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              props.onSelect?.();
+            }}
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+              props.isSelected
+                ? "bg-blue-500 border-blue-500 text-white"
+                : "bg-white border-gray-400 hover:border-blue-400"
+            }`}
+          >
+            {props.isSelected && <IonIcon icon={checkmarkOutline} className="text-[10px]" />}
+          </button>
+        )}
+        <div className="flex items-center justify-between flex-1 pr-1">
           <div className="flex items-center gap-2">
             {/* <span className={`w-2 h-2 rounded-full`}></span> */}
             <span
@@ -113,7 +157,7 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
       </div>
 
       {/* Card Body */}
-      <div className="p-4 pl-10 cursor-pointer" onClick={() => {}}>
+      <div className="p-4 pl-10 cursor-pointer" onClick={() => { }}>
         {/* Pelanggan Info */}
         <div className="flex items-start gap-3 mb-3">
           <div
@@ -165,11 +209,10 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
             <span>Aktif: {formatDate(props.customer?.tglaktif ?? "")}</span>
           </div>
           <div
-            className={`flex items-center gap-2 text-xs font-semibold ${
-              isOverdue
-                ? "text-red-500"
-                : "text-gray-400"
-            }`}
+            className={`flex items-center gap-2 text-xs font-semibold ${isOverdue
+              ? "text-red-500"
+              : "text-gray-400"
+              }`}
           >
             <IonIcon
               icon={timeOutline}
@@ -235,6 +278,18 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
       <div className="px-4 pb-4 pl-10 flex-1 flex flex-row justify-between gap-2">
         <div className="flex-1 flex flex-row gap-2">
           <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowComplaintModal(true);
+            }}
+            className="flex-1"
+          >
+            <span className=" px-3 py-2 flex-row  bg-yellow-50 text-yellow-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
+              <IonIcon icon={warningOutline} className="text-sm" />
+              Keluhan
+            </span>
+          </button>
+          <button
             onClick={async (e) => {
               e.stopPropagation();
               await AppLauncher.openUrl({
@@ -278,6 +333,61 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
           </button>
         )}
       </div>
+
+      <IonModal
+        isOpen={showComplaintModal}
+        onDidDismiss={() => setShowComplaintModal(false)}
+        breakpoints={[0, 0.5, 0.7]}
+        initialBreakpoint={0.5}
+        className="complaint-modal"
+      >
+        <IonHeader className="ion-no-border">
+          <IonToolbar>
+            <IonTitle>Lapor Keluhan</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={() => setShowComplaintModal(false)}>
+                <IonIcon icon={closeCircleOutline} />
+              </IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <div className="mb-4">
+            <h4 className="text-sm font-bold text-gray-800 mb-1">
+              {props.customer?.namapelanggan}
+            </h4>
+            <p className="text-xs text-gray-500">
+              Silakan tuliskan detail keluhan pelanggan di bawah ini.
+            </p>
+          </div>
+
+          <IonItem className="rounded-xl border border-gray-100 mb-6" lines="none">
+            <IonTextarea
+              placeholder="Contoh: Koneksi internet lambat sejak pagi ini..."
+              rows={6}
+              value={complaintText}
+              onIonInput={(e) => setComplaintText(e.detail.value!)}
+              className="text-sm"
+            />
+          </IonItem>
+
+          <IonButton
+            expand="block"
+            className="h-12 font-bold"
+            style={{ "--border-radius": "14px" }}
+            onClick={sendComplaintToWhatsapp}
+            disabled={!complaintText.trim()}
+          >
+            Kirim ke WhatsApp
+          </IonButton>
+        </IonContent>
+      </IonModal>
+
+      <style>{`
+        .complaint-modal {
+          --border-radius: 24px 24px 0 0;
+        }
+      `}</style>
     </div>
   );
 };
