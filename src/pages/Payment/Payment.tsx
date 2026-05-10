@@ -42,6 +42,7 @@ const PaymentPage: React.FC = () => {
   const [paymentList, setPaymentList] = useState<Array<Payment> | null>(null);
   const [paymentExits, setPaymentExits] = useState<Array<Payment>>([]);
   const [loadingRequest, setLoadingRequest] = useState<boolean>(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>("");
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
@@ -114,6 +115,7 @@ const PaymentPage: React.FC = () => {
     if (selectedCustomer && imagePaymentSource) {
       setShowConfirmModal(false);
       setLoadingRequest(true);
+      setLoadingMessage("Menghubungkan ke server Rlradius...");
         try {
           if (selectedCustomer.unpaid) {
             const resRlradiusPayment = await HttpPaymentRlradius.setLunas(
@@ -176,6 +178,7 @@ const PaymentPage: React.FC = () => {
               updated_at: undefined,
             };
 
+            setLoadingMessage("Menyimpan bukti pembayaran...");
             const resPayment = await HttpPaymentApi.create(reqPayment);
 
             console.log({ resPayment });
@@ -192,6 +195,7 @@ const PaymentPage: React.FC = () => {
           //   uc.setCustomers([...uc.customers]);
           // }
 
+          setLoadingMessage("Sinkronisasi data pelanggan...");
           await customerContext?.reqAllCustomers(true);
           setImagePaymentSource(null);
           setSelectedCustomer(null);
@@ -267,6 +271,7 @@ const PaymentPage: React.FC = () => {
   return (
     <BaseLayout
       loadingPage={loadingRequest}
+      loadingMessage={loadingMessage}
       headerTitle="Pembayaran"
       backHref="/customer"
     >

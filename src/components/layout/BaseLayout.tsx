@@ -17,6 +17,7 @@ type BaseLayoutProp = {
   headerToolbarEndRender?: React.ReactNode;
   headerTitle?: string;
   loadingPage?: boolean;
+  loadingMessage?: string;
   backHref?: string | undefined;
 };
 
@@ -26,6 +27,7 @@ const BaseLayout: React.FC<BaseLayoutProp> = ({
   headerToolbarEndRender,
   headerTitle,
   loadingPage = false,
+  loadingMessage,
   backHref,
 }) => {
   const history = useHistory();
@@ -39,7 +41,10 @@ const BaseLayout: React.FC<BaseLayoutProp> = ({
 
   return (
     <IonPage className="bg-gray-50">
-      <IonLoading isOpen={loadingPage} message="Memproses..." />
+      <IonLoading
+        isOpen={loadingPage || (!!app.customer?.loadingMessage && loadingPage)}
+        message={loadingMessage || app.customer?.loadingMessage || "Memproses..."}
+      />
 
       {/* Header */}
       <IonHeader className="ion-no-border shadow-sm">
