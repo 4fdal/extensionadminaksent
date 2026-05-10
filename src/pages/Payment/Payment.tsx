@@ -6,12 +6,13 @@ import {
   useIonToast,
   IonActionSheet,
 } from "@ionic/react";
-import { checkmarkCircle, arrowForward, image, calendar, person } from "ionicons/icons";
+import { checkmarkCircle, arrowForward, image, calendar, person, cameraOutline, syncOutline } from "ionicons/icons";
 import ImagePicker from "@/components/input/ImagePicker";
 import { useAppContext } from "@/context/app-context";
 import { Customer } from "@/types/customer";
 import SelectCustomer from "@/components/customer/SelectCustomer";
 import DateTimeInput from "@/components/input/DateTimeInput";
+import { extractTimeFromImage } from "@/utils/ocr";
 import { format } from "date-fns";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { Capacitor } from "@capacitor/core";
@@ -37,6 +38,7 @@ const PaymentPage: React.FC = () => {
   const [paymentExits, setPaymentExits] = useState<Array<Payment>>([]);
   const [loadingRequest, setLoadingRequest] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>("");
+  const [isScanning, setIsScanning] = useState<boolean>(false);
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [paymentDate, setPaymentDate] = useState<string>(format(new Date(), "yyyy-MM-dd HH:mm:ss"));
@@ -83,6 +85,29 @@ const PaymentPage: React.FC = () => {
   const handlePaymentSubmit = () => {
     if (selectedCustomer && imagePaymentSource) {
       setShowConfirmModal(true);
+    }
+  };
+
+  const handleScanTime = async () => {
+    if (!imagePaymentSource) return;
+    setIsScanning(true);
+    present({ message: "Memindai gambar...", duration: 2000 });
+    const time = await extractTimeFromImage(imagePaymentSource);
+    setIsScanning(false);
+
+    if (time) {
+      const splitStrDateTime = paymentDate.split(" ");
+      const datePart = splitStrDateTime[0] || format(new Date(), "yyyy-MM-dd");
+
+      let newTime = time;
+      if (newTime.length === 5) newTime += ":00";
+
+      const newDatetime = `${datePart} ${newTime}`;
+      handleChangeDateTimeInput(newDatetime);
+      setPaymentDate(newDatetime);
+      present({ message: `Waktu terdeteksi: ${newTime}`, color: "success", duration: 2000 });
+    } else {
+      present({ message: "Waktu tidak terdeteksi pada gambar", color: "warning", duration: 2000 });
     }
   };
 
@@ -172,15 +197,8 @@ const PaymentPage: React.FC = () => {
   const handleChangeDateTimeInput = (strDateTime: string) => {
     setPaymentDate(strDateTime);
     const currPaymentExits = paymentList?.filter(item => {
-      const itemTime = new Date(item.waktubayar);
-      const itemDate = new Date(item.tanggalbayar);
-      const HH = String(itemTime.getHours()).padStart(2, "0");
-      const mm = String(itemTime.getMinutes()).padStart(2, "0");
-      const ss = String(itemTime.getSeconds()).padStart(2, "0");
-      const yyyy = String(itemDate.getFullYear()).padStart(4, "0");
-      const MM = String(itemDate.getMonth() + 1).padStart(2, "0");
-      const dd = String(itemDate.getDate()).padStart(2, "0");
-      return strDateTime === `${yyyy}-${MM}-${dd} ${HH}:${mm}:${ss}`;
+      const datetimeStr = `${item.tanggalbayar} ${item.waktubayar}`;
+      return strDateTime === datetimeStr;
     });
     if (currPaymentExits) setPaymentExits(currPaymentExits);
   };
@@ -205,19 +223,17 @@ const PaymentPage: React.FC = () => {
         {/* Step 1 & 2 Grid on Desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Step 1: Upload Proof */}
-          <div className="space-y-2">
+          <div className="space-y-2 flex flex-col h-full">
             <div className="flex items-center gap-2 px-1">
               <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
                 <span className="text-[9px] font-bold text-primary">01</span>
               </div>
               <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Bukti Pembayaran</h2>
             </div>
-            <GlassCard className="!p-3 flex flex-col">
-              <ImagePicker
-                src={imagePaymentSource}
-                onChange={({ path }) => setImagePaymentSource(path)}
-              />
-            </GlassCard>
+            <ImagePicker
+              src={imagePaymentSource}
+              onChange={({ path }) => setImagePaymentSource(path)}
+            />
           </div>
 
           {/* Step 2: Customer & Date */}
@@ -230,9 +246,21 @@ const PaymentPage: React.FC = () => {
             </div>
             <GlassCard className="space-y-3 !p-4">
               <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                  <IonIcon icon={calendar} className="text-xs" /> Waktu Pembayaran
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[9px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                    <IonIcon icon={calendar} className="text-xs" /> Waktu Pembayaran
+                  </label>
+                  {imagePaymentSource && (
+                    <button
+                      onClick={handleScanTime}
+                      disabled={isScanning}
+                      className="text-[9px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1 disabled:opacity-50 hover:bg-primary/20 transition-colors"
+                    >
+                      <IonIcon icon={isScanning ? syncOutline : cameraOutline} className={isScanning ? "animate-spin" : ""} />
+                      {isScanning ? "Memindai..." : "Scan Waktu"}
+                    </button>
+                  )}
+                </div>
                 <DateTimeInput
                   value={paymentDate}
                   onChange={handleChangeDateTimeInput}

@@ -58,6 +58,7 @@
     "sqlite": "^5.1.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.1.18",
+    "tesseract.js": "^7.0.0",
     "typeorm": "^0.3.28"
   },
   "devDependencies": {

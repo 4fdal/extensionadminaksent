@@ -19,19 +19,14 @@ const DateTimeInput: React.FC<DateTimeInputProp> = ({
   const timeInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (value && !currentDate && !currentTime) {
+    if (value) {
       const [date, time] = value.split(" ");
-      if (date) setCurrentDate(date);
-      if (time) setCurrentTime(time);
+      if (date && date !== currentDate) setCurrentDate(date);
+      if (time && time !== currentTime) setCurrentTime(time);
     }
   }, [value]);
 
-  useEffect(() => {
-    if (currentDate && currentTime) {
-      const newValue = `${currentDate} ${currentTime}`;
-      if (newValue !== value) onChange(newValue);
-    }
-  }, [currentDate, currentTime]);
+
 
   const handleChangeTime = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -41,11 +36,13 @@ const DateTimeInput: React.FC<DateTimeInputProp> = ({
     if (numbersOnly.length > 2) formatted += ":" + numbersOnly.slice(2, 4);
     if (numbersOnly.length > 4) formatted += ":" + numbersOnly.slice(4, 6);
     setCurrentTime(formatted);
+    if (currentDate) onChange(`${currentDate} ${formatted}`);
   };
 
   const handleChangeDate = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCurrentDate(e.target.value);
     timeInputRef.current?.focus();
+    if (currentTime) onChange(`${e.target.value} ${currentTime}`);
   };
 
   return (
@@ -70,7 +67,10 @@ const DateTimeInput: React.FC<DateTimeInputProp> = ({
         />
         {currentTime && (
           <button 
-            onClick={() => setCurrentTime("")}
+            onClick={() => {
+              setCurrentTime("");
+              if (currentDate) onChange(`${currentDate} `);
+            }}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 transition-colors"
           >
             <IonIcon icon={closeCircle} />

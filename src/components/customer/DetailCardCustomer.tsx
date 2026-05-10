@@ -239,9 +239,9 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
         onDidDismiss={() => setShowComplaintModal(false)}
         breakpoints={[0, 0.6, 0.8]}
         initialBreakpoint={0.6}
-        className="glass-modal"
+      // className="glass-modal"
       >
-        <div className="glass-dark h-full p-8 flex flex-col gap-6">
+        <div className="glass-dark p-8 flex flex-col justify-start">
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <h2 className="text-2xl font-bold text-slate-800">Lapor Keluhan</h2>

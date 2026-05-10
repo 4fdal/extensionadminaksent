@@ -183,9 +183,9 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.03 }}
                         onClick={() => handleSelectCustomer(customer)}
-                        className={`p-3 rounded-xl mb-2 cursor-pointer border transition-all ${isSelected
+                        className={`p-3 rounded-xl mb-2 cursor-pointer  border transition-all ${isSelected
                           ? "bg-primary/10 border-primary shadow-sm"
-                          : "bg-white/5 border-white/5 hover:border-white/20"
+                          : "shadow-sm border-gray-50"
                           }`}
                       >
                         <div className="flex items-center gap-3">
@@ -195,9 +195,9 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
 
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-center gap-2">
-                              <h4 className={`text-sm font-bold truncate ${isSelected ? "text-primary" : "text-slate-800"}`}>
+                              <span className={`text-sm font-bold truncate ${isSelected ? "text-primary" : "text-slate-800"}`}>
                                 {customer.namapelanggan}
-                              </h4>
+                              </span>
                               {isSelected && <IonIcon icon={checkmarkCircle} className="text-primary text-lg" />}
                             </div>
 
