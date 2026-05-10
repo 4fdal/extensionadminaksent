@@ -56,7 +56,7 @@ const BaseLayout: React.FC<BaseLayoutProp> = ({
             <motion.div
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="glass glass-shadow rounded-xl px-4 py-2.5 flex items-center justify-between max-w-7xl mx-auto pointer-events-auto"
+              className="glass glass-shadow pt-5 rounded-xl px-4 py-2.5 flex items-center justify-between max-w-7xl mx-auto pointer-events-auto"
             >
               <div className="flex items-center gap-3">
                 {backHref && (
@@ -64,12 +64,12 @@ const BaseLayout: React.FC<BaseLayoutProp> = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => history.push(backHref)}
-                    className="!p-1.5"
+                    className="!p-1.5 mt-3"
                   >
                     <ChevronLeft size={18} />
                   </GlassButton>
                 )}
-                <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 tracking-tight">
+                <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight">
                   {headerTitle}
                 </h1>
               </div>

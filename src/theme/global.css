@@ -4,14 +4,14 @@
 
 /* Glassmorphism Design System */
 :root {
-  --ion-background-color: #0F172A;
-  --ion-text-color: #F8FAFC;
+  --ion-background-color: #F8FBFF;
+  --ion-text-color: #1E293B;
   
-  --ion-color-primary: #6C63FF;
-  --ion-color-primary-rgb: 108, 99, 255;
+  --ion-color-primary: #60A5FA;
+  --ion-color-primary-rgb: 96, 165, 250;
   --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-shade: #5A52D5;
-  --ion-color-primary-tint: #7B73FF;
+  --ion-color-primary-shade: #3B82F6;
+  --ion-color-primary-tint: #93C5FD;
 
   --ion-color-success: #10B981;
   --ion-color-success-shade: #059669;
@@ -21,25 +21,25 @@
 
 /* Glassmorphism Classes */
 .glass {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
 }
 
 .glass-dark {
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.9);
 }
 
 .glass-border {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.7);
 }
 
 .glass-shadow {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(56, 189, 248, 0.1);
 }
 
 /* Custom Utilities */
@@ -66,7 +66,7 @@ ion-toolbar {
 }
 
 ion-page {
-  background: #0F172A !important;
+  background: #F8FBFF !important;
 }
 
 ion-item {
@@ -95,7 +95,7 @@ h1, h2, h3 {
 }
 
 .text-muted {
-  color: #94A3B8;
+  color: #64748B;
 }
 
 /* Hide scrollbar for cleaner look */

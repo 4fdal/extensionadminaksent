@@ -30,9 +30,9 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
       className="glass-modal"
     >
       <div className="glass-dark h-full p-4 flex flex-col gap-4">
-        <div className="flex justify-between items-center border-b border-white/5 pb-3">
+        <div className="flex justify-between items-center border-b border-slate-200 pb-3">
           <div>
-            <h2 className="text-lg font-black text-white tracking-tight">Detail Pembayaran</h2>
+            <h2 className="text-lg font-black text-slate-800 tracking-tight">Detail Pembayaran</h2>
             <p className="text-slate-500 text-xs">{customer.namapelanggan}</p>
           </div>
           <GlassButton variant="ghost" size="sm" onClick={onDismiss} className="!p-1.5">
@@ -50,10 +50,10 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
             </div>
           ) : (
             <div className="text-center py-8 px-4">
-              <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10">
-                <IonIcon icon={search} className="text-3xl text-slate-700" />
+              <div className="w-16 h-16 bg-white/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-200">
+                <IonIcon icon={search} className="text-3xl text-slate-400" />
               </div>
-              <h3 className="text-white font-bold text-base mb-1">
+              <h3 className="text-slate-800 font-bold text-base mb-1">
                 Tidak Ada Riwayat
               </h3>
               <p className="text-slate-600 text-xs mb-6">

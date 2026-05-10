@@ -76,25 +76,25 @@ const CustomerPage: React.FC = () => {
       headerRender={
         <div className="space-y-2 max-w-7xl mx-auto">
           {/* Compact Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {stats.map((stat, i) => (
               <GlassCard 
                 key={stat.label} 
-                className={`!p-2.5 border-white/5 bg-gradient-to-br ${stat.color} hover:scale-[1.01]`}
+                className={`!p-2.5 border-white/60 bg-gradient-to-br ${stat.color} hover:scale-[1.01]`}
                 delay={i * 0.05}
               >
                 <div className="flex items-center gap-2.5">
-                  <div className={`p-1.5 rounded-lg bg-white/5 border border-white/10 ${stat.textColor}`}>
+                  <div className={`p-1.5 rounded-lg bg-white/50 border border-white/60 ${stat.textColor}`}>
                     <IonIcon icon={stat.icon} className="text-lg" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">{stat.label}</span>
-                    <span className="text-base font-black text-white leading-tight">{stat.count}</span>
+                    <span className="text-base font-black text-slate-800 leading-tight">{stat.count}</span>
                   </div>
                 </div>
               </GlassCard>
             ))}
-          </div>
+          </div> */}
 
           <div className="glass glass-shadow rounded-xl p-1.5 flex flex-col md:flex-row gap-1.5">
             <TextSearchToolbar
@@ -121,7 +121,7 @@ const CustomerPage: React.FC = () => {
       headerToolbarEndRender={
         <div className="flex items-center gap-2">
           <GlassButton variant="ghost" size="sm" onClick={() => setShowActionSheet(true)} className="!p-2">
-            <IonIcon icon={ellipsisVertical} className="text-white text-xl" />
+            <IonIcon icon={ellipsisVertical} className="text-slate-600 text-xl" />
           </GlassButton>
           <IonActionSheet
             isOpen={showActionSheet}

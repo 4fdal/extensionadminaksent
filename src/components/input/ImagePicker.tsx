@@ -1,8 +1,10 @@
 import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
-import { IonButton, IonIcon, IonImg, IonText } from "@ionic/react";
-import { imageOutline } from "ionicons/icons";
-import React, { useEffect, useState } from "react";
+import { IonIcon, IonText } from "@ionic/react";
+import { imageOutline, trashOutline, syncOutline } from "ionicons/icons";
+import React, { useEffect, useState, useRef } from "react";
+import { motion } from "framer-motion";
+import GlassButton from "./../ui/GlassButton";
 
 type ImagePickerProp = {
   src?: string | null;
@@ -11,74 +13,131 @@ type ImagePickerProp = {
 
 const ImagePicker: React.FC<ImagePickerProp> = (props) => {
   const [imageScr, setImageSrc] = useState<string | null>(null);
-  const [hight, setHight] = useState<number | undefined>(undefined);
+  const [scale, setScale] = useState<number>(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const initialDistance = useRef<number | null>(null);
 
-  const handleImageUpload = async () => {
-    // const result = await FilePicker.pickFiles({
-    //   readData: true,
-    // });
-    // const file = result.files[0];
-    // file.data = `data:${file.mimeType};base64,${file.data}`;
-    // const path = Capacitor.convertFileSrc(file.path ?? "");
-    // console.log(file);
-    // if (file.blob) {
-    //   setImageFile(
-    //     new File([file.blob], file.name, {
-    //       type: file.mimeType,
-    //       lastModified: Date.now(),
-    //     }),
-    //   );
-    //   setImageSrc(path);
-    //   setHight(file.height);
-    // }
-    // if (props.onChange) props.onChange({ file, path });
-
-    const result = await FilePicker.pickFiles({ types: ["image/*"] });
-    if (result.files.length > 0) {
-      const file = result.files[0];
-      if (file.path) {
-        const capFilePath = Capacitor.convertFileSrc(file.path);
-        setImageSrc(capFilePath);
-        setHight(file.height);
-        if (props.onChange) props.onChange({ path: capFilePath });
+  const handleImageUpload = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      const result = await FilePicker.pickFiles({ types: ["image/*"] });
+      if (result.files.length > 0) {
+        const file = result.files[0];
+        if (file.path) {
+          const capFilePath = Capacitor.convertFileSrc(file.path);
+          setImageSrc(capFilePath);
+          setScale(1);
+          if (props.onChange) props.onChange({ path: capFilePath });
+        }
       }
+    } catch (error) {
+      console.error("Error picking file:", error);
     }
   };
 
   useEffect(() => {
-    if (imageScr == null) setImageSrc(props.src);
+    if (props.src !== undefined && imageScr !== props.src) {
+      setImageSrc(props.src);
+      setScale(1);
+    }
   }, [props.src]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      initialDistance.current = dist / scale;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && initialDistance.current) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const newScale = Math.min(Math.max(1, dist / initialDistance.current), 4);
+      setScale(newScale);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    initialDistance.current = null;
+  };
+
   return (
-    <div className="">
+    <div className="flex flex-col gap-2 h-full">
       <div
-        onClick={handleImageUpload}
-        className={`w-full ${imageScr ? `h-[${hight}px]` : "h-48"} rounded-lg flex items-center justify-center border-2 border-dashed border-blue-500 cursor-pointer overflow-hidden relative transition-all duration-200 ${imageScr ? "bg-transparent" : "bg-blue-50"}`}
+        ref={containerRef}
+        className={`w-full relative rounded-2xl flex-1 flex flex-col items-center justify-center border-2 border-dashed transition-all duration-300 overflow-hidden ${
+          imageScr
+            ? "border-transparent bg-slate-100"
+            : "border-slate-300 bg-white/50 hover:bg-white/80 cursor-pointer"
+        }`}
+        style={{ minHeight: "16rem", touchAction: "none" }}
+        onClick={!imageScr ? handleImageUpload : undefined}
       >
-        {imageScr ? (
-          <IonImg src={imageScr} className="w-full h-full object-cover" />
-        ) : (
-          <div className="text-center text-blue-500">
-            <IonIcon icon={imageOutline} className="text-5xl mb-2" />
-            <IonText className="block text-sm font-medium">
+        {!imageScr ? (
+          <div className="text-center text-slate-400 p-6 flex flex-col items-center">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-3 border border-slate-100">
+              <IonIcon icon={imageOutline} className="text-3xl text-primary" />
+            </div>
+            <IonText className="block text-sm font-bold text-slate-700 mb-1">
               Tap untuk upload bukti
             </IonText>
+            <IonText className="block text-xs font-medium text-slate-400">
+              Mendukung format JPG, PNG
+            </IonText>
           </div>
+        ) : (
+          <>
+            <motion.img
+              src={imageScr}
+              alt="Preview Bukti Pembayaran"
+              drag={scale > 1}
+              dragConstraints={containerRef}
+              dragElastic={0.2}
+              animate={{ scale }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              className={`w-full h-auto max-h-[60vh] object-contain ${
+                scale > 1 ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+              }`}
+              style={{ originX: 0.5, originY: 0.5 }}
+            />
+
+            {/* Hover Actions / Overlay Controls */}
+            <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+              <button
+                onClick={handleImageUpload}
+                className="bg-white/90 backdrop-blur-md shadow-sm px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-[10px] font-bold hover:bg-white flex items-center gap-1.5 transition-colors"
+              >
+                <IonIcon icon={syncOutline} className="text-primary text-sm" />
+                Ganti
+              </button>
+            </div>
+          </>
         )}
       </div>
 
       {imageScr && (
-        <IonButton
-          expand="block"
-          fill="clear"
-          size="small"
+        <GlassButton
+          variant="danger"
+          size="sm"
           onClick={() => {
             setImageSrc(null);
+            setScale(1);
+            if (props.onChange) props.onChange({ path: "" });
           }}
-          className="mt-2 text-red-500"
+          className="w-full mt-1"
         >
-          Hapus Gambar
-        </IonButton>
+          <IonIcon icon={trashOutline} className="text-base" />
+          <span>Hapus Gambar</span>
+        </GlassButton>
       )}
     </div>
   );

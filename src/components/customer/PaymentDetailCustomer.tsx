@@ -12,9 +12,9 @@ type PaymentDetailCustomerProp = {
 
 const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
   return (
-    <GlassCard className="!p-0 overflow-hidden border-white/5">
+    <GlassCard className="!p-0 overflow-hidden border-slate-200">
       {/* Gambar Bukti Bayar Section */}
-      <div className="relative group h-64 sm:h-80 w-full bg-slate-900 flex items-center justify-center overflow-hidden">
+      <div className="relative group h-64 sm:h-80 w-full bg-slate-100 flex items-center justify-center overflow-hidden">
         {props.data?.gambar ? (
           <>
             <img
@@ -22,10 +22,10 @@ const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
               alt="Bukti Bayar"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-60" />
           </>
         ) : (
-          <div className="flex flex-col items-center gap-2 text-slate-700">
+          <div className="flex flex-col items-center gap-2 text-slate-400">
             <IonIcon icon={personOutline} className="text-4xl" />
             <span className="text-xs font-bold uppercase tracking-tighter">No Preview Available</span>
           </div>
@@ -47,7 +47,7 @@ const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
         {/* Header Info */}
         <div className="flex justify-between items-start">
           <div className="space-y-1">
-            <h3 className="text-xl font-black text-white flex items-center gap-2">
+            <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
               {props.data?.namapelanggan}
             </h3>
             <p className="text-slate-400 text-xs font-medium font-mono uppercase tracking-tight">
@@ -64,18 +64,18 @@ const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
 
         {/* Transaction Details */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
+          <div className="bg-white/50 rounded-2xl p-3 border border-slate-200">
             <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Tanggal</span>
-            <div className="flex items-center gap-2 text-white">
+            <div className="flex items-center gap-2 text-slate-800">
               <IonIcon icon={calendarOutline} className="text-slate-400 text-sm" />
               <span className="text-sm font-bold">
                 {props.data?.tanggalbayar ? formatDate(new Date(props.data.tanggalbayar), "DD MMM YYYY") : "-"}
               </span>
             </div>
           </div>
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
+          <div className="bg-white/50 rounded-2xl p-3 border border-slate-200">
             <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Waktu</span>
-            <div className="flex items-center gap-2 text-white">
+            <div className="flex items-center gap-2 text-slate-800">
               <IonIcon icon={timeOutline} className="text-slate-400 text-sm" />
               <span className="text-sm font-bold font-mono">
                 {props.data?.waktubayar ? formatDate(new Date(props.data.waktubayar), "HH:mm:ss") : "-"}
@@ -86,9 +86,9 @@ const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
 
         {/* Total Highlight */}
         <div className="bg-gradient-to-r from-primary to-secondary p-0.5 rounded-2xl shadow-lg shadow-primary/20">
-          <div className="bg-slate-900/90 backdrop-blur-xl rounded-[14px] p-4 flex justify-between items-center">
-            <span className="text-xs font-black text-white/50 uppercase tracking-widest">Total Bayar</span>
-            <span className="text-2xl font-black text-white tracking-tighter">
+          <div className="bg-white/90 backdrop-blur-xl rounded-[14px] p-4 flex justify-between items-center">
+            <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Total Bayar</span>
+            <span className="text-2xl font-black text-slate-800 tracking-tighter">
               Rp {(props.data?.total ?? 0).toLocaleString("id-ID")}
             </span>
           </div>

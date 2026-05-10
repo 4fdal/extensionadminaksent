@@ -9,18 +9,19 @@ export default {
         extend: {
             colors: {
                 primary: {
-                    DEFAULT: '#6C63FF',
-                    50: '#EEECFF',
-                    100: '#D9D7FF',
-                    500: '#6C63FF',
-                    600: '#5A52D5',
+                    DEFAULT: '#60A5FA', // light blue
+                    50: '#EFF6FF',
+                    100: '#DBEAFE',
+                    500: '#60A5FA',
+                    600: '#3B82F6',
+                    light: '#93C5FD',
                 },
-                secondary: '#8B5CF6',
+                secondary: '#38BDF8', // sky blue
                 accent: '#00D4FF',
                 dark: {
-                    DEFAULT: '#0F172A',
+                    DEFAULT: '#1E293B',
                     900: '#0F172A',
-                    800: '#111827',
+                    800: '#1E293B',
                 }
             },
             animation: {

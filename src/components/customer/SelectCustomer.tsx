@@ -56,23 +56,23 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
   useEffect(() => { setCustomers(props.data); }, [props.data]);
 
   useEffect(() => {
-    if (props.selected != null && 
-        (props.selected?.unpaid ?? props.selected?.paid)?.invoice !== 
-        (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice) {
+    if (props.selected != null &&
+      (props.selected?.unpaid ?? props.selected?.paid)?.invoice !==
+      (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice) {
       setSelectedCustomer(props.selected);
     }
   }, [props.selected]);
 
   useEffect(() => {
-    if (props.onChange && 
-        (props.selected?.unpaid ?? props.selected?.paid)?.invoice !== 
-        (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice) {
+    if (props.onChange &&
+      (props.selected?.unpaid ?? props.selected?.paid)?.invoice !==
+      (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice) {
       props.onChange(selectedCustomer);
     }
   }, [selectedCustomer]);
 
   const filteredCustomers = useMemo(() => {
-    return customers.filter(c => 
+    return customers.filter(c =>
       c.namapelanggan.toLowerCase().includes(searchText.toLowerCase()) ||
       c.nolayanan.includes(searchText) ||
       c.unpaid?.invoice.toLowerCase().includes(searchText.toLowerCase())
@@ -88,7 +88,7 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
   return (
     <div className="space-y-3">
       {/* Compact Select Trigger */}
-      <GlassCard 
+      <GlassCard
         className={`!p-3 cursor-pointer group relative overflow-hidden ${selectedCustomer ? "border-primary/50 bg-primary/5" : ""}`}
         onClick={() => setShowCustomerModal(true)}
       >
@@ -102,11 +102,11 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
               <IonIcon icon={people} className="text-2xl" />
             </div>
           )}
-          
+
           <div className="flex-1 min-w-0">
-            <h3 className={`text-base font-bold truncate ${selectedCustomer ? "text-white" : "text-slate-500"}`}>
+            <span className={`text-base font-bold truncate ${selectedCustomer ? "text-blue-500" : "text-slate-500"}`}>
               {selectedCustomer ? selectedCustomer.namapelanggan : "Pilih Pelanggan"}
-            </h3>
+            </span>
             <p className="text-[10px] text-slate-500 mt-0.5">
               {selectedCustomer ? (
                 <span className="flex items-center gap-1.5">
@@ -121,7 +121,7 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
             <IonIcon icon={chevronDown} className={`text-base transition-transform ${showCustomerModal ? "rotate-180" : ""}`} />
           </div>
         </div>
-        
+
         <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
       </GlassCard>
 
@@ -134,10 +134,10 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
       >
         <div className="glass-dark h-full flex flex-col">
           {/* Modal Header - Compact */}
-          <div className="p-4 border-b border-white/5 space-y-3">
+          <div className="p-4 border-b border-slate-200 space-y-3">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-black text-white tracking-tight">Daftar Pelanggan</h2>
+                <h2 className="text-xl font-black text-slate-800 tracking-tight">Daftar Pelanggan</h2>
                 <p className="text-slate-500 text-xs font-medium">{customers.length} total tersedia</p>
               </div>
               <GlassButton variant="ghost" size="sm" onClick={() => setShowCustomerModal(false)} className="!p-1.5">
@@ -153,7 +153,7 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="Cari nama, invoice, atau nomor layanan..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                className="w-full bg-white/50 border border-white/60 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
               />
             </div>
           </div>
@@ -162,10 +162,10 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
             <div className="p-3">
               {filteredCustomers.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10">
-                    <IonIcon icon={search} className="text-3xl text-slate-700" />
+                  <div className="w-16 h-16 bg-white/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-200">
+                    <IonIcon icon={search} className="text-3xl text-slate-400" />
                   </div>
-                  <h3 className="text-white font-bold text-base">Tidak Ditemukan</h3>
+                  <h3 className="text-slate-800 font-bold text-base">Tidak Ditemukan</h3>
                   <p className="text-slate-600 text-xs mt-1">Coba gunakan kata kunci lain</p>
                 </div>
               ) : (
@@ -183,25 +183,24 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.03 }}
                         onClick={() => handleSelectCustomer(customer)}
-                        className={`p-3 rounded-xl mb-2 cursor-pointer border transition-all ${
-                          isSelected 
-                            ? "bg-primary/10 border-primary shadow-sm" 
-                            : "bg-white/5 border-white/5 hover:border-white/20"
-                        }`}
+                        className={`p-3 rounded-xl mb-2 cursor-pointer border transition-all ${isSelected
+                          ? "bg-primary/10 border-primary shadow-sm"
+                          : "bg-white/5 border-white/5 hover:border-white/20"
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getAvatarGradient(customer.namapelanggan)} flex items-center justify-center text-white font-bold text-lg flex-shrink-0`}>
                             {customer.namapelanggan.charAt(0)}
                           </div>
-                          
+
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-center gap-2">
-                              <h4 className={`text-sm font-bold truncate ${isSelected ? "text-primary-light" : "text-white"}`}>
+                              <h4 className={`text-sm font-bold truncate ${isSelected ? "text-primary" : "text-slate-800"}`}>
                                 {customer.namapelanggan}
                               </h4>
                               {isSelected && <IonIcon icon={checkmarkCircle} className="text-primary text-lg" />}
                             </div>
-                            
+
                             <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-500 font-medium">
                               <span className="flex items-center gap-1">
                                 <IonIcon icon={call} className="text-[9px]" /> {customer.profile?.phone}
@@ -211,12 +210,12 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
                                 <IonIcon icon={locationOutline} className="text-[9px]" /> {customer.alamatpemasangan}
                               </span>
                             </div>
-                            
+
                             <div className="mt-2 flex items-center gap-2">
-                              <span className="text-[9px] bg-white/5 px-1.5 py-0.5 rounded text-slate-500 font-mono">
+                              <span className="text-[9px] bg-white/50 px-1.5 py-0.5 rounded text-slate-500 font-mono">
                                 {customer.unpaid?.invoice}
                               </span>
-                              <span className="text-[9px] font-black text-accent uppercase tracking-tighter">
+                              <span className="text-[9px] font-black text-primary uppercase tracking-tighter">
                                 {formatRupiah(Number(customer.unpaid?.total))}
                               </span>
                             </div>
@@ -229,11 +228,11 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
               )}
             </div>
           </IonContent>
-          
+
           {/* Compact Footer Stats */}
-          <div className="p-3 glass border-t border-white/5 flex justify-between items-center">
+          <div className="p-3 glass border-t border-slate-200 flex justify-between items-center">
             <span className="text-[10px] text-slate-600 font-medium uppercase tracking-tight">
-              <span className="text-white font-bold">{filteredCustomers.length}</span> PELANGGAN
+              <span className="text-slate-800 font-bold">{filteredCustomers.length}</span> PELANGGAN
             </span>
             {searchText && (
               <GlassButton variant="secondary" size="sm" onClick={() => setSearchText("")} className="!py-1 !px-2.5">

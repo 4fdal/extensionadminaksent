@@ -21,10 +21,10 @@ const GlassButton: React.FC<GlassButtonProps> = ({
   ...props 
 }) => {
   const variants = {
-    primary: "bg-gradient-to-r from-[#6C63FF] to-[#8B5CF6] text-white shadow-lg shadow-primary/20 hover:shadow-primary/40",
-    secondary: "bg-white/10 text-white hover:bg-white/20 border border-white/10",
-    ghost: "bg-transparent text-white/70 hover:text-white hover:bg-white/5",
-    danger: "bg-red-500/20 text-red-400 border border-red-500/20 hover:bg-red-500/30",
+    primary: "bg-gradient-to-r from-[#60A5FA] to-[#38BDF8] text-white shadow-lg shadow-primary/30 hover:shadow-primary/50",
+    secondary: "bg-white/40 text-slate-700 hover:bg-white/60 border border-white/50",
+    ghost: "bg-transparent text-slate-500 hover:text-slate-800 hover:bg-white/40",
+    danger: "bg-red-50 text-red-500 border border-red-200 hover:bg-red-100",
   };
 
   const sizes = {

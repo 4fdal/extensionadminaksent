@@ -39,14 +39,14 @@ const HeaderFilterChipToolbar: React.FC<HeaderFilterChipToolbarProp> = (
             }}
             className={`flex items-center gap-2 py-1.5 px-3 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all duration-300 cursor-pointer ${
               selectedTab?.key === status.key
-                ? "bg-primary text-white glass-shadow"
-                : "bg-white/5 text-slate-400 hover:text-white border border-white/5"
+                ? "bg-primary text-white shadow-md shadow-primary/20"
+                : "bg-white/50 text-slate-500 hover:text-slate-800 border border-white/60"
             }`}
           >
             {status.label}
             <span
               className={`px-1.5 py-0.5 rounded-md text-[9px] ${
-                selectedTab?.key === status.key ? "bg-white/20" : "bg-white/5"
+                selectedTab?.key === status.key ? "bg-white/20 text-white" : "bg-white/50 text-slate-600"
               }`}
             >
               {status.count}

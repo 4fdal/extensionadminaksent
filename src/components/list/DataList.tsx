@@ -38,7 +38,7 @@ const DataList: React.FC<DataListProp> = (props) => {
               className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 ${
                 props.isAllSelected
                   ? "bg-primary border-primary text-white scale-105"
-                  : "bg-white/5 border-white/20 hover:border-white/40"
+                  : "bg-white/50 border-slate-300 hover:border-slate-400"
               }`}
             >
               {props.isAllSelected && (
@@ -47,7 +47,7 @@ const DataList: React.FC<DataListProp> = (props) => {
             </button>
           )}
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-white leading-none">
+            <span className="text-xs font-bold text-slate-800 leading-none">
               {props.selectedCount && props.selectedCount > 0
                 ? `${props.selectedCount} Terpilih`
                 : "Daftar Data"}
@@ -106,7 +106,7 @@ const DataList: React.FC<DataListProp> = (props) => {
                 className="w-12 h-12 relative z-10"
               />
             </div>
-            <h3 className="text-white font-bold text-lg mb-1">
+            <h3 className="text-slate-800 font-bold text-lg mb-1">
               {props.loadingMessage || "Memuat Data..."}
             </h3>
             <p className="text-slate-500 text-xs max-w-xs mx-auto">
@@ -117,10 +117,10 @@ const DataList: React.FC<DataListProp> = (props) => {
 
         {props.dataNotFound && !props.loading ? (
           <GlassCard className="text-center py-12 flex flex-col items-center">
-            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10">
-              <IonIcon icon={search} className="text-3xl text-slate-600" />
+            <div className="w-16 h-16 bg-white/50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
+              <IonIcon icon={search} className="text-3xl text-slate-400" />
             </div>
-            <h3 className="text-white font-bold text-lg mb-1">
+            <h3 className="text-slate-800 font-bold text-lg mb-1">
               Data Tidak Ditemukan
             </h3>
             <p className="text-slate-500 text-xs max-w-xs mx-auto mb-6">

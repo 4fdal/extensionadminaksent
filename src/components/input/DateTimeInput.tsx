@@ -56,7 +56,7 @@ const DateTimeInput: React.FC<DateTimeInputProp> = ({
           type="date"
           value={currentDate}
           onChange={handleChangeDate}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+          className="w-full bg-white/50 border border-white/60 rounded-xl px-4 py-3 text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
         />
       </div>
       <div className="flex-1 relative">
@@ -66,12 +66,12 @@ const DateTimeInput: React.FC<DateTimeInputProp> = ({
           value={currentTime}
           onChange={handleChangeTime}
           placeholder="HH:MM:SS"
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-slate-600"
+          className="w-full bg-white/50 border border-white/60 rounded-xl px-4 py-3 text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-slate-400"
         />
         {currentTime && (
           <button 
             onClick={() => setCurrentTime("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 transition-colors"
           >
             <IonIcon icon={closeCircle} />
           </button>

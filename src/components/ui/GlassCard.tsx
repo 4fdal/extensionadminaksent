@@ -34,8 +34,9 @@ const GlassCard: React.FC<GlassCardProps> = ({
       animate={animate ? { opacity: 1, y: 0, scale: 1 } : false}
       whileHover={hoverScale ? { 
         scale: 1.02, 
-        backgroundColor: "rgba(255, 255, 255, 0.12)",
-        borderColor: "rgba(255, 255, 255, 0.25)" 
+        backgroundColor: "rgba(255, 255, 255, 0.8)",
+        borderColor: "rgba(255, 255, 255, 0.9)",
+        boxShadow: "0 10px 40px rgba(96, 165, 250, 0.2)"
       } : {}}
       transition={{ 
         duration: 0.4, 

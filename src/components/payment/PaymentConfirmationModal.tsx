@@ -38,10 +38,10 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
         </div>
 
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-black text-white tracking-tight">Konfirmasi Bayar</h2>
-          <p className="text-slate-400 text-sm leading-relaxed">
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Konfirmasi Bayar</h2>
+          <p className="text-slate-600 text-sm leading-relaxed">
             Apakah Anda yakin ingin memproses pelunasan untuk pelanggan{" "}
-            <span className="text-white font-bold">{customerName}</span>?
+            <span className="text-slate-800 font-bold">{customerName}</span>?
           </p>
         </div>
 

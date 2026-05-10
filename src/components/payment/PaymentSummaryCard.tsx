@@ -34,16 +34,16 @@ const PaymentSummaryCard: React.FC<PaymentSummaryCardProps> = ({ customer }) => 
             { label: "Pelanggan", value: customer?.namapelanggan },
             { label: "Layanan", value: customer?.namaprofile, mono: true },
           ].map((item, i) => item.value && (
-            <div key={i} className="flex justify-between items-center px-3 py-2 bg-white/5 rounded-lg border border-white/5">
+            <div key={i} className="flex justify-between items-center px-3 py-2 bg-white/50 rounded-lg border border-slate-200">
               <span className="text-[11px] font-medium text-slate-500">{item.label}</span>
-              <span className={`text-[11px] font-bold text-white ${item.mono ? "font-mono" : ""}`}>{item.value}</span>
+              <span className={`text-[11px] font-bold text-slate-800 ${item.mono ? "font-mono" : ""}`}>{item.value}</span>
             </div>
           ))}
 
           {(customer?.unpaid?.total ?? customer?.paid?.total) && (
             <div className="mt-2 px-3 py-2.5 bg-accent/10 rounded-xl border border-accent/20 flex justify-between items-center">
               <span className="text-[10px] font-black text-accent uppercase tracking-tighter">Total Bayar</span>
-              <span className="text-lg font-black text-white leading-none">
+              <span className="text-lg font-black text-slate-800 leading-none">
                 {formatRupiah(Number(customer?.unpaid?.total ?? customer?.paid?.total))}
               </span>
             </div>

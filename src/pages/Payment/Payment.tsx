@@ -205,20 +205,20 @@ const PaymentPage: React.FC = () => {
         {/* Step 1 & 2 Grid on Desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Step 1: Upload Proof */}
-          <section className="space-y-2">
+          <div className="space-y-2">
             <div className="flex items-center gap-2 px-1">
               <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
                 <span className="text-[9px] font-bold text-primary">01</span>
               </div>
               <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Bukti Pembayaran</h2>
             </div>
-            <GlassCard className="!p-3 h-[200px] md:h-full flex flex-col">
+            <GlassCard className="!p-3 flex flex-col">
               <ImagePicker
                 src={imagePaymentSource}
                 onChange={({ path }) => setImagePaymentSource(path)}
               />
             </GlassCard>
-          </section>
+          </div>
 
           {/* Step 2: Customer & Date */}
           <section className="space-y-2">
@@ -268,7 +268,7 @@ const PaymentPage: React.FC = () => {
             </div>
             <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Ringkasan & Konfirmasi</h2>
           </div>
-          
+
           <PaymentSummaryCard customer={selectedCustomer} />
 
           <GlassButton
