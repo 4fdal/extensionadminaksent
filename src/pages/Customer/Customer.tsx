@@ -1,6 +1,6 @@
 import DataItemRender from "@/components/customer/DataItemRender";
+import CustomerDetailModal from "@/components/customer/CustomerDetailModal";
 import DetailCardCustomer from "@/components/customer/DetailCardCustomer";
-import PaymentDetailCustomer from "@/components/customer/PaymentDetailCustomer";
 import BaseLayout from "@/components/layout/BaseLayout";
 import DataList from "@/components/list/DataList";
 import HeaderFilterChipToolbar, {
@@ -9,16 +9,14 @@ import HeaderFilterChipToolbar, {
 import TextSearchToolbar from "@/components/toolbars/TextSearch";
 import { useAppContext } from "@/context/app-context";
 import { Customer } from "@/types/customer";
-import { UI_CONFIG } from "@/config";
 import {
   IonActionSheet,
   IonButton,
   IonButtons,
   IonContent,
   IonIcon,
-  IonModal,
 } from "@ionic/react";
-import { ellipsisVertical, refreshCircle, search } from "ionicons/icons";
+import { ellipsisVertical, refreshCircle } from "ionicons/icons";
 import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 
@@ -34,15 +32,15 @@ const CustomerPage: React.FC = () => {
   const [modalCustDetail, setModalCustDetail] = useState<Customer | null>(null);
 
   useEffect(() => {
+    if (isPageLoaded || !customerContext) return;
+    
     (async () => {
       setLoading(true);
-      if (!isPageLoaded) {
-        await customerContext?.reqAllCustomers(true);
-        hasPageLoaded(true);
-      }
+      await customerContext.reqAllCustomers(true);
+      hasPageLoaded(true);
       setLoading(false);
     })();
-  }, [isPageLoaded, customerContext]);
+  }, [isPageLoaded, customerContext?.reqAllCustomers]);
 
   const handleSyncCustomer = async () => {
     setLoading(true);
@@ -130,7 +128,8 @@ const CustomerPage: React.FC = () => {
       <IonContent>
         <DataList
           loading={loading}
-          dataNotFound={customerContext?.totalCustomer == 0}
+          loadingMessage={customerContext?.loadingMessage}
+          dataNotFound={customerContext?.filteredCustomers.length == 0}
         >
           <DataItemRender
             onClickDetail={(item) => setModalCustDetail(item)}
@@ -139,59 +138,11 @@ const CustomerPage: React.FC = () => {
           />
         </DataList>
 
-        <IonModal
+        <CustomerDetailModal
           isOpen={modalCustDetail != null}
-          onDidDismiss={() => {
-            setModalCustDetail(null);
-          }}
-          breakpoints={[...UI_CONFIG.MODAL_BREAKPOINTS]}
-          initialBreakpoint={UI_CONFIG.MODAL_INITIAL_BREAKPOINT}
-          handleBehavior="cycle"
-          className="customer-modal"
-        >
-          {modalCustDetail?.payment ? (
-            <div className="p-2 mt-2   flex flex-col gap-2 h-full">
-              <PaymentDetailCustomer data={modalCustDetail.payment} />
-              <IonButton
-                style={{
-                  "--border-radius": UI_CONFIG.BORDER_RADIUS_ROUNDED,
-                }}
-                onClick={() => setModalCustDetail(null)}
-              >
-                Close
-              </IonButton>
-              <div className="mb-10"></div>
-            </div>
-          ) : (
-            <>
-              <div className="text-center p-12">
-                <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <IonIcon icon={search} className="text-4xl text-gray-400" />
-                </div>
-                <h3 className="text-gray-800 font-semibold text-lg mb-2">
-                  Tidak ada data pembayaran
-                </h3>
-                <p className="text-gray-500 text-sm">
-                  Coba lakukan proses sync pembayaran terlebih dahulu!
-                </p>
-                <IonButton
-                  className="mt-3"
-                  style={{
-                    "--border-radius": UI_CONFIG.BORDER_RADIUS_ROUNDED,
-                  }}
-                  onClick={() => {
-                    history.push(
-                      "/payment?invoice=" + modalCustDetail?.paid?.invoice,
-                    );
-                    setModalCustDetail(null);
-                  }}
-                >
-                  Sync Pembayaran
-                </IonButton>
-              </div>
-            </>
-          )}
-        </IonModal>
+          customer={modalCustDetail}
+          onDismiss={() => setModalCustDetail(null)}
+        />
       </IonContent>
     </BaseLayout>
   );

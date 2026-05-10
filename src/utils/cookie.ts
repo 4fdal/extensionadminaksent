@@ -59,8 +59,6 @@ export const isExpiredCookie = async (
   try {
     if (cookie == null || cookie == "" || cookie == undefined) return true;
 
-    console.log("[isExpiredCookie] Checking cookie", cookie);
-
     const response = await CapacitorHttp.get({
       url,
       headers: {

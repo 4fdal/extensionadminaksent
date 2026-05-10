@@ -10,6 +10,7 @@ import React from "react";
 export type DataListProp = {
   children?: React.ReactNode;
   loading?: boolean;
+  loadingMessage?: string;
   dataNotFound?: boolean;
 };
 
@@ -75,7 +76,7 @@ const DataList: React.FC<DataListProp> = (props) => {
               />
             </div>
             <h3 className="text-gray-800 font-semibold text-lg mb-2">
-              Process load data
+              {props.loadingMessage || "Process load data"}
             </h3>
             <p className="text-gray-500 text-sm">
               Tunggu beberapa saat, jangan meninggalkan halaman ini!

@@ -108,7 +108,7 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
     if (
       props.selected != null &&
       (props.selected?.unpaid ?? props.selected?.paid)?.invoice !=
-        (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice
+      (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice
     )
       setSelectedCustomer(props.selected);
   }, [props.selected]);
@@ -117,7 +117,7 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
     if (
       props.onChange &&
       (props.selected?.unpaid ?? props.selected?.paid)?.invoice !=
-        (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice
+      (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice
     )
       props.onChange(selectedCustomer);
   }, [selectedCustomer]);
@@ -176,10 +176,6 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
               </div>
               {selectedCustomer ? (
                 <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-sm text-gray-600 flex items-center gap-1 bg-white px-2 py-0.5 rounded-full shadow-sm">
-                    <IonIcon icon={call} className="text-xs text-blue-500" />
-                    {selectedCustomer.profile?.phone}
-                  </span>
                   <span className="text-sm text-gray-600 flex items-center gap-1 bg-white px-2 py-0.5 rounded-full shadow-sm">
                     <IonIcon icon={call} className="text-xs text-blue-500" />
                     {selectedCustomer.profile?.phone}

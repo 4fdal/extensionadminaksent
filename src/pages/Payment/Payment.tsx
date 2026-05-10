@@ -8,17 +8,10 @@ import {
   IonIcon,
   IonButton,
   IonText,
-  IonModal,
-  IonBackdrop,
   IonLoading,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonImg,
   useIonToast,
 } from "@ionic/react";
-import { checkmarkCircle, arrowForward, warningOutline } from "ionicons/icons";
+import { checkmarkCircle, arrowForward } from "ionicons/icons";
 import ImagePicker from "@/components/input/ImagePicker";
 import { useAppContext } from "@/context/app-context";
 import { Customer } from "@/types/customer";
@@ -30,15 +23,16 @@ import DateTimeInput from "@/components/input/DateTimeInput";
 import { format } from "date-fns";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { Capacitor } from "@capacitor/core";
-import { Dialog } from "@capacitor/dialog";
 import {
   HttpPaymentApi,
   HttpPaymentRlradius,
   Payment,
-  PaymentList,
 } from "@/utils/payment";
 import { useHistory } from "react-router";
 import DetailCardCustomer from "@/components/customer/DetailCardCustomer";
+import PaymentSummaryCard from "@/components/payment/PaymentSummaryCard";
+import PaymentConfirmationModal from "@/components/payment/PaymentConfirmationModal";
+import PaymentExistsWarning from "@/components/payment/PaymentExistsWarning";
 
 const PaymentPage: React.FC = () => {
   const [present] = useIonToast();
@@ -59,6 +53,7 @@ const PaymentPage: React.FC = () => {
     null,
   );
 
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [modalPaymentExits, setModalPaymentExits] = useState<boolean>(false);
   const [modalDataPaymentExits, setModalDataPaymentExits] =
     useState<Customer | null>(null);
@@ -105,19 +100,20 @@ const PaymentPage: React.FC = () => {
     setPaymentDate(format(new Date(), "dd/MM/yyyy HH:ii:ss"));
   }, []);
 
-  const handlePaymentSubmit = async () => {
+  const handlePaymentSubmit = () => {
+    if (selectedCustomer && imagePaymentSource) {
+      setShowConfirmModal(true);
+    }
+  };
+
+  const processPayment = async () => {
     const splitStrDateTime = paymentDate.split(" ");
     const datePayment = splitStrDateTime?.[0];
     const timePayment = splitStrDateTime?.[1];
 
     if (selectedCustomer && imagePaymentSource) {
-      const { value } = await Dialog.confirm({
-        title: `Pembayaran ${selectedCustomer?.namapelanggan}`,
-        message: `Apakah anda yakin ingin menyelesaikan pembayaran ini ? `,
-      });
-
-      if (value) {
-        setLoadingRequest(true);
+      setShowConfirmModal(false);
+      setLoadingRequest(true);
         try {
           if (selectedCustomer.unpaid) {
             const resRlradiusPayment = await HttpPaymentRlradius.setLunas(
@@ -227,7 +223,6 @@ const PaymentPage: React.FC = () => {
           }
         }
         setLoadingRequest(false);
-      }
     }
   };
 
@@ -239,7 +234,7 @@ const PaymentPage: React.FC = () => {
         // Using new date converter pattern or local formatting if specific
         const itemDate = new Date(item.tanggalbayar);
         const itemTime = new Date(item.waktubayar);
-        
+
         // Manual formatting to match strDateTime format if needed, 
         // but ideally we use a centralized utility.
         const HH = String(itemTime.getHours()).padStart(2, "0");
@@ -248,7 +243,7 @@ const PaymentPage: React.FC = () => {
         const yyyy = String(itemDate.getFullYear()).padStart(4, "0");
         const MM = String(itemDate.getMonth() + 1).padStart(2, "0");
         const dd = String(itemDate.getDate()).padStart(2, "0");
-        
+
         const itemDateTime = `${yyyy}-${MM}-${dd} ${HH}:${mm}:${ss}`;
         return strDateTime == itemDateTime;
       },
@@ -302,77 +297,19 @@ const PaymentPage: React.FC = () => {
                 value={paymentDate}
                 onChange={handleChangeDateTimeInput}
               />
-              {paymentExits.length > 0 && (
-                <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200 flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                    <IonIcon
-                      icon={warningOutline}
-                      className="text-orange-600 text-xl"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-orange-800 text-sm">
-                      Waktu Pembayaran
-                    </h4>
-                    <div className="flex flex-col">
-                      {paymentExits.map((item) => {
-                        return (
-                          <span
-                            key={item.invoice}
-                            onClick={() => handleClickPaymentExitsItem(item)}
-                            className="text-red-600 font-bold"
-                          >
-                            {item.nolayanan} / {item.namapelanggan}
-                          </span>
-                        );
-                      })}
-                    </div>
-                    <p className="text-orage-500 text-xs mt-0.5">
-                      Telah terpantau ada pelanggan yang melakukan pembayaran
-                      pada waktu yang sama
-                    </p>
-                    <IonModal isOpen={modalPaymentExits}>
-                      <IonHeader>
-                        <IonToolbar>
-                          <IonTitle style={{ "margin-left": "10px" }}>
-                            {modalDataPaymentExits?.namapelanggan}
-                          </IonTitle>
-                          <IonButtons slot="end">
-                            <IonButton
-                              onClick={() => setModalPaymentExits(false)}
-                            >
-                              Close
-                            </IonButton>
-                          </IonButtons>
-                        </IonToolbar>
-                      </IonHeader>
-                      <IonContent className="ion-padding flex flex-col gap-2">
-                        <div
-                          className="relative bg-white rounded-2xl shadow-sm border-2 transition-all duration-200 overflow-hidden border-transparent hover:border-gray-200"
-                          style={{ animationDelay: `${1 * 50}ms` }}
-                        >
-                          <IonImg
-                            src={modalDataPaymentExits?.payment?.gambar}
-                          />
-                        </div>
-                        <div className="mt-3 mb-20">
-                          {modalDataPaymentExits && (
-                            <DetailCardCustomer
-                              customer={modalDataPaymentExits}
-                            />
-                          )}
-                        </div>
-                      </IonContent>
-                    </IonModal>
-                  </div>
-                </div>
-              )}
+              <PaymentExistsWarning
+                payments={paymentExits}
+                onItemClick={handleClickPaymentExitsItem}
+                showModal={modalPaymentExits}
+                modalData={modalDataPaymentExits}
+                onCloseModal={() => setModalPaymentExits(false)}
+              />
 
             </div>
 
             {/* Select Nama Pelanggan dengan Search */}
             <SelectCustomer
-              data={customerContext?.customers ?? []}
+              data={customerContext?.customers.filter((cust) => cust.unpaid || !cust.payment) ?? []}
               selected={selectedCustomer}
               onChange={setSelectedCustomer}
             />
@@ -395,63 +332,14 @@ const PaymentPage: React.FC = () => {
         </IonButton>
 
         {/* Summary Card */}
-        {selectedCustomer && (
-          <IonCard className="rounded-2xl shadow-lg my-4 bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 m-0 overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-200 rounded-full -mr-16 -mt-16 opacity-50" />
-            <IonCardContent className="p-5 relative">
-              <IonText className="text-xs font-bold text-orange-600 uppercase tracking-wider block mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                {!selectedCustomer?.ispaid
-                  ? "Ringkasan Pembayaran"
-                  : "Ringkasan Update Data Pembayaran"}
-              </IonText>
-              <div className="space-y-3">
-                {selectedCustomer?.unpaid?.invoice && (
-                  <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
-                    <span className="text-gray-600 text-sm font-medium">
-                      No. Invoice
-                    </span>
-                    <span className="font-bold text-gray-800 text-sm font-mono">
-                      {selectedCustomer?.unpaid?.invoice}
-                    </span>
-                  </div>
-                )}
-                {selectedCustomer?.namapelanggan && (
-                  <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
-                    <span className="text-gray-600 text-sm font-medium">
-                      Pelanggan
-                    </span>
-                    <span className="font-bold text-gray-800 text-sm">
-                      {selectedCustomer?.namapelanggan}
-                    </span>
-                  </div>
-                )}
+        <PaymentSummaryCard customer={selectedCustomer} />
 
-                {selectedCustomer?.namaprofile && (
-                  <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
-                    <span className="text-gray-600 text-sm font-medium">
-                      Profile Internet
-                    </span>
-                    <span className="font-bold text-gray-800 text-sm font-mono">
-                      {selectedCustomer?.namaprofile}
-                    </span>
-                  </div>
-                )}
-
-                {selectedCustomer?.unpaid?.total && (
-                  <div className="flex justify-between items-center p-3 bg-green-100 rounded-xl border border-green-200">
-                    <span className="text-green-800 text-sm font-bold">
-                      Total Pembayaran
-                    </span>
-                    <span className="text-green-700 text-lg font-extrabold">
-                      {formatRupiah(Number(selectedCustomer?.unpaid?.total))}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </IonCardContent>
-          </IonCard>
-        )}
+        <PaymentConfirmationModal
+          isOpen={showConfirmModal}
+          onDismiss={() => setShowConfirmModal(false)}
+          onConfirm={processPayment}
+          customerName={selectedCustomer?.namapelanggan}
+        />
 
         <div className="mb-10"></div>
       </IonContent>
@@ -477,7 +365,7 @@ const PaymentPage: React.FC = () => {
           scrollbar-width: none;
         }
         
-        .customer-modal {
+        .customer-modal, .confirm-modal {
           --border-radius: 24px 24px 0 0;
         }
       `}</style>

@@ -9,8 +9,12 @@ const TextSearchToolbar: React.FC<TextSearchToolbarProp> = (props) => {
   const [searchText, setSearchText] = useState<string | null | undefined>("");
 
   useEffect(() => {
-    if (props.onChange) props.onChange(searchText ?? "");
-  }, [searchText, props]);
+    const handler = setTimeout(() => {
+      if (props.onChange) props.onChange(searchText ?? "");
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [searchText]);
 
   return (
     <IonToolbar className="bg-white pb-2">
@@ -19,8 +23,8 @@ const TextSearchToolbar: React.FC<TextSearchToolbarProp> = (props) => {
           <IonSearchbar
             value={searchText}
             onIonClear={() => setSearchText("")}
-            onKeyUp={(e) => {
-              setSearchText(e.currentTarget.value);
+            onIonInput={(e) => {
+              setSearchText(e.detail.value);
             }}
             placeholder="Cari invoice, pelanggan, layanan..."
             className="p-0 bg-gray-100 rounded-full"

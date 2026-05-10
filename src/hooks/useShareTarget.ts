@@ -9,13 +9,13 @@ const useShareTargetLitener = (
   onShareReceived: (event: ShareReceivedEvent) => void,
 ) => {
   useEffect(() => {
-    const listener = CapacitorShareTarget.addListener(
+    const handlePromise = CapacitorShareTarget.addListener(
       "shareReceived",
       onShareReceived,
     );
 
     return () => {
-      listener.remove();
+      handlePromise.then((handle) => handle.remove());
     };
   }, [onShareReceived]);
 };

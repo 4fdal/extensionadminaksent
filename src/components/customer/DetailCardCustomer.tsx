@@ -12,7 +12,7 @@ import {
   personOutline,
   timeOutline,
 } from "ionicons/icons";
-import React from "react";
+import React, { useMemo } from "react";
 import { differenceInDays } from "date-fns";
 import { useHistory } from "react-router";
 import { AppLauncher } from "@capacitor/app-launcher";
@@ -26,33 +26,38 @@ type DetailCardCustomerProp = {
 const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
   const history = useHistory();
 
-  const latePaymentDateDiff = () => {
-    return differenceInDays(
-      new Date(props.customer?.tglisolir ?? ""),
-      new Date(),
-    );
-  };
+  const { customer } = props;
 
-  const getStatusLabel = () => {
-    if (props.customer?.isolirmanual) return "Isolir";
-    if (props.customer?.aktif) return "Active";
+  const { overdueDays, isOverdue } = useMemo(() => {
+    if (!customer?.tglisolir) return { overdueDays: 0, isOverdue: false };
+    const isolirDate = new Date(customer.tglisolir);
+    const now = new Date();
+    const diff = differenceInDays(isolirDate, now);
+    return {
+      overdueDays: Math.abs(diff),
+      isOverdue: now > isolirDate,
+    };
+  }, [customer?.tglisolir]);
+
+  const statusLabel = useMemo(() => {
+    if (customer?.isolirmanual) return "Isolir";
+    if (customer?.aktif) return "Active";
     return "Deactive";
-  };
+  }, [customer?.isolirmanual, customer?.aktif]);
 
-  const getCardClassName = () => {
+  const cardClassName = useMemo(() => {
     const baseClass =
       "relative bg-white rounded-2xl shadow-sm border-2 transition-all duration-200 overflow-hidden";
-    const statusClass = props.customer?.isolirmanual
+    const statusClass = customer?.isolirmanual
       ? "border-red-500 shadow-md"
       : "border-transparent hover:border-gray-200";
     return `${baseClass} ${statusClass}`;
-  };
+  }, [customer?.isolirmanual]);
 
   return (
     <div
-      key={1}
-      className={getCardClassName()}
-      style={{ animationDelay: `${1 * 50}ms` }}
+      className={cardClassName}
+      style={{ animationDelay: `${50}ms` }}
     >
 
       {/* Card Header - Status & Invoice */}
@@ -64,9 +69,9 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
           <div className="flex items-center gap-2">
             {/* <span className={`w-2 h-2 rounded-full`}></span> */}
             <span
-              className={`text-xs font-bold uppercase ${!props.customer?.isolirmanual ? "text-blue-500" : ""}`}
+              className={`text-xs font-bold uppercase ${!customer?.isolirmanual ? "text-blue-500" : ""}`}
             >
-              {getStatusLabel()}
+              {statusLabel}
             </span>
             <span className="text-gray-300">|</span>
             <span className="text-xs font-mono font-semibold text-gray-600">
@@ -161,7 +166,7 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
           </div>
           <div
             className={`flex items-center gap-2 text-xs font-semibold ${
-              new Date() > new Date(props.customer?.tglisolir ?? "")
+              isOverdue
                 ? "text-red-500"
                 : "text-gray-400"
             }`}
@@ -169,15 +174,15 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
             <IonIcon
               icon={timeOutline}
               className={
-                new Date() > new Date(props.customer?.tglisolir ?? "")
+                isOverdue
                   ? "text-red-500"
                   : "text-gray-400"
               }
             />
             <span>
-              {new Date() > new Date(props.customer?.tglisolir ?? "")
-                ? `Terlambat ${Math.abs(latePaymentDateDiff())} hari`
-                : `${latePaymentDateDiff()} hari lagi`}
+              {isOverdue
+                ? `Terlambat ${overdueDays} hari`
+                : `${overdueDays} hari lagi`}
             </span>
           </div>
         </div>

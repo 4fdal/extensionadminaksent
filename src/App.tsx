@@ -35,9 +35,9 @@ import "./theme/global.css";
 import PaymentPage from "./pages/Payment/Payment";
 import CustomerPage from "./pages/Customer/Customer";
 import React from "react";
-import { useCustomer } from "./hooks/requests/customer";
+import { useCustomer } from "./hooks/useCustomer";
 import { AppContext } from "./context/app-context";
-import { useShareTarget } from "./hooks/share-target";
+import { useShareTarget } from "./hooks/useShareTarget";
 
 setupIonicReact();
 

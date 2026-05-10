@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  IonContent,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
 } from "@ionic/react";
@@ -35,30 +34,26 @@ const DataItemRender: React.FC<DataItemRenderProp> = (props) => {
   }, [tab, data]);
 
   return (
-    <>
-      <IonContent
-        scrollEvents={true}
-        scrollY={true}
-        className="h-[65vh] flex flex-col gap-2"
-      >
-        <div>
-          {customerItems.map((item) => (
-            <div key={item.nolayanan} className="mb-2">
-              <DetailCardCustomer
-                customer={item}
-                onClickDetail={() => {
-                  if (props.onClickDetail) props.onClickDetail(item);
-                }}
-              />
-            </div>
-          ))}
-        </div>
-        <IonInfiniteScroll
-          threshold={`${SCROLL_DOWN_ACTIVE}px`}
-          onIonInfinite={(ev) => {
-            const currentStart = start + DEFAULT_LENGTH;
-            const currentEnd = end + DEFAULT_LENGTH;
+    <div className="flex flex-col gap-2">
+      <div>
+        {customerItems.map((item) => (
+          <div key={item.nolayanan} className="mb-2">
+            <DetailCardCustomer
+              customer={item}
+              onClickDetail={() => {
+                if (props.onClickDetail) props.onClickDetail(item);
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      <IonInfiniteScroll
+        threshold={`${SCROLL_DOWN_ACTIVE}px`}
+        onIonInfinite={(ev) => {
+          const currentStart = start + DEFAULT_LENGTH;
+          const currentEnd = end + DEFAULT_LENGTH;
 
+          if (currentStart < props.data.length) {
             setCustomerItems([
               ...customerItems,
               ...props.data.slice(currentStart, currentEnd),
@@ -66,14 +61,14 @@ const DataItemRender: React.FC<DataItemRenderProp> = (props) => {
 
             setStart(currentStart);
             setEnd(currentEnd);
+          }
 
-            ev.target.complete();
-          }}
-        >
-          <IonInfiniteScrollContent loadingText="Loading more..." />
-        </IonInfiniteScroll>
-      </IonContent>
-    </>
+          ev.target.complete();
+        }}
+      >
+        <IonInfiniteScrollContent loadingText="Loading more..." />
+      </IonInfiniteScroll>
+    </div>
   );
 };
 
