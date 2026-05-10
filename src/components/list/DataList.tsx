@@ -8,6 +8,9 @@ import {
   search,
 } from "ionicons/icons";
 import React from "react";
+import GlassButton from "../ui/GlassButton";
+import GlassCard from "../ui/GlassCard";
+import { motion } from "framer-motion";
 
 export type DataListProp = {
   children?: React.ReactNode;
@@ -26,33 +29,41 @@ export type DataListProp = {
 
 const DataList: React.FC<DataListProp> = (props) => {
   return (
-    <div className="h-100 flex flex-col">
-      <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+    <div className="h-full flex flex-col gap-3">
+      <div className="glass glass-shadow rounded-xl px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-3">
           {props.onSelectAll && (
             <button
               onClick={props.onSelectAll}
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 ${
                 props.isAllSelected
-                  ? "bg-blue-500 border-blue-500 text-white"
-                  : "bg-white border-gray-400 hover:border-blue-400"
+                  ? "bg-primary border-primary text-white scale-105"
+                  : "bg-white/5 border-white/20 hover:border-white/40"
               }`}
             >
               {props.isAllSelected && (
-                <IonIcon icon={checkmarkOutline} className="text-xs" />
+                <IonIcon icon={checkmarkOutline} className="text-[9px] font-bold" />
               )}
             </button>
           )}
-          <span className="text-xs text-gray-500 font-medium">
-            {props.selectedCount && props.selectedCount > 0
-              ? `${props.selectedCount} dipilih`
-              : `${props.totalData ?? 0} data`}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-white leading-none">
+              {props.selectedCount && props.selectedCount > 0
+                ? `${props.selectedCount} Terpilih`
+                : "Daftar Data"}
+            </span>
+            <span className="text-[9px] text-slate-500 font-medium uppercase tracking-tight mt-0.5">
+              {props.totalData ?? 0} TOTAL DATA
+            </span>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button
+        
+        <div className="flex gap-1.5">
+          <GlassButton
+            variant="secondary"
+            size="sm"
             onClick={props.onSort}
-            className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            className="!px-3 !py-1.5"
           >
             <IonIcon
               icon={
@@ -62,74 +73,79 @@ const DataList: React.FC<DataListProp> = (props) => {
                     : arrowDownOutline
                   : optionsOutline
               }
-              className="text-sm"
+              className="text-base"
             />
-            Urutkan
-          </button>
+            <span className="hidden sm:inline text-[11px]">Urutkan</span>
+          </GlassButton>
+          
           {props.onFilter && (
-            <button
+            <GlassButton
+              variant={props.isFilterActive ? "primary" : "secondary"}
+              size="sm"
               onClick={props.onFilter}
-              className={`flex items-center gap-1 px-3 py-1.5 border rounded-lg text-xs font-medium transition-colors ${
-                props.isFilterActive
-                  ? "bg-blue-50 border-blue-200 text-blue-600"
-                  : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-              }`}
+              className="!px-3 !py-1.5 relative"
             >
-              <IonIcon icon={funnelOutline} className="text-sm" />
-              Filter
+              <IonIcon icon={funnelOutline} className="text-base" />
+              <span className="hidden sm:inline text-[11px]">Filter</span>
               {props.isFilterActive && (
-                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-accent rounded-full border-2 border-[#0F172A] animate-pulse"></span>
               )}
-            </button>
+            </GlassButton>
           )}
         </div>
       </div>
 
-      <div className="p-4 space-y-3">
+      <div className="space-y-2">
         {props.loading && (
-          <div className="text-center py-12">
-            <div className="rounded-full flex items-center justify-center mx-auto mb-4">
+          <GlassCard className="text-center py-10 flex flex-col items-center">
+            <div className="relative mb-4">
+              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
               <IonSpinner
-                name="circular"
+                name="crescent"
                 color="primary"
-                className="w-20 h-20"
+                className="w-12 h-12 relative z-10"
               />
             </div>
-            <h3 className="text-gray-800 font-semibold text-lg mb-2">
-              {props.loadingMessage || "Process load data"}
+            <h3 className="text-white font-bold text-lg mb-1">
+              {props.loadingMessage || "Memuat Data..."}
             </h3>
-            <p className="text-gray-500 text-sm">
-              Tunggu beberapa saat, jangan meninggalkan halaman ini!
+            <p className="text-slate-500 text-xs max-w-xs mx-auto">
+              Mohon tunggu sejenak sementara kami menyiapkan informasi untuk Anda.
             </p>
-          </div>
+          </GlassCard>
         )}
 
         {props.dataNotFound && !props.loading ? (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <IonIcon icon={search} className="text-4xl text-gray-400" />
+          <GlassCard className="text-center py-12 flex flex-col items-center">
+            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10">
+              <IonIcon icon={search} className="text-3xl text-slate-600" />
             </div>
-            <h3 className="text-gray-800 font-semibold text-lg mb-2">
-              Tidak ada data
+            <h3 className="text-white font-bold text-lg mb-1">
+              Data Tidak Ditemukan
             </h3>
-            <p className="text-gray-500 text-sm">
-              Coba ubah filter atau kata kunci pencarian
+            <p className="text-slate-500 text-xs max-w-xs mx-auto mb-6">
+              Coba sesuaikan filter atau kata kunci pencarian Anda untuk melihat hasil lain.
             </p>
-            <IonButton
-              className="mt-3"
-              style={{
-                "--border-radius": "10px",
-              }}
-            >
+            <GlassButton variant="primary" size="sm" onClick={() => window.location.reload()}>
               Reset Filter
-            </IonButton>
-          </div>
+            </GlassButton>
+          </GlassCard>
         ) : (
-          !props.loading && props.children
+          !props.loading && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="grid gap-2"
+            >
+              {props.children}
+            </motion.div>
+          )
         )}
       </div>
     </div>
+
   );
 };
 
 export default React.memo(DataList);
+

@@ -1,39 +1,34 @@
-import { IonSearchbar, IonToolbar } from "@ionic/react";
 import React, { useEffect, useState } from "react";
+import GlassInput from "../ui/GlassInput";
+import { Search } from "lucide-react";
 
 type TextSearchToolbarProp = {
   onChange?: (searchText: string) => void;
 };
 
 const TextSearchToolbar: React.FC<TextSearchToolbarProp> = (props) => {
-  const [searchText, setSearchText] = useState<string | null | undefined>("");
+  const [searchText, setSearchText] = useState<string>("");
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (props.onChange) props.onChange(searchText ?? "");
+      if (props.onChange) props.onChange(searchText);
     }, 500);
 
     return () => clearTimeout(handler);
-  }, [searchText]);
+  }, [searchText, props]);
 
   return (
-    <IonToolbar className="bg-white pb-2">
-      <div className="px-4">
-        <div className="relative rounded-full p-0.5 bg-white">
-          <IonSearchbar
-            value={searchText}
-            onIonClear={() => setSearchText("")}
-            onIonInput={(e) => {
-              setSearchText(e.detail.value);
-            }}
-            placeholder="Cari invoice, pelanggan, layanan..."
-            className="p-0 bg-gray-100 rounded-full"
-            style={{ "--box-shadow": "none" }}
-          />
-        </div>
-      </div>
-    </IonToolbar>
+    <div className="flex-1">
+      <GlassInput
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+        placeholder="Cari invoice, pelanggan, layanan..."
+        icon={<Search size={18} />}
+        className="!bg-white/5 border-white/5"
+      />
+    </div>
   );
 };
 
 export default TextSearchToolbar;
+

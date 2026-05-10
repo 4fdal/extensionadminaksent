@@ -1,7 +1,8 @@
 import React from "react";
-import { IonCard, IonCardContent, IonText } from "@ionic/react";
 import { Customer } from "@/types/customer";
 import { formatRupiah } from "@/utils";
+import GlassCard from "../ui/GlassCard";
+import { motion } from "framer-motion";
 
 type PaymentSummaryCardProps = {
   customer: Customer | null;
@@ -11,62 +12,48 @@ const PaymentSummaryCard: React.FC<PaymentSummaryCardProps> = ({ customer }) => 
   if (!customer) return null;
 
   return (
-    <IonCard className="rounded-2xl shadow-lg my-4 bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 m-0 overflow-hidden">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-orange-200 rounded-full -mr-16 -mt-16 opacity-50" />
-      <IonCardContent className="p-5 relative">
-        <IonText className="text-xs font-bold text-orange-600 uppercase tracking-wider block mb-3 flex items-center gap-2">
-          <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-          {!customer?.ispaid
-            ? "Ringkasan Pembayaran"
-            : "Ringkasan Update Data Pembayaran"}
-        </IonText>
-        <div className="space-y-3">
-          {customer?.unpaid?.invoice && (
-            <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
-              <span className="text-gray-600 text-sm font-medium">
-                No. Invoice
-              </span>
-              <span className="font-bold text-gray-800 text-sm font-mono">
-                {customer?.unpaid?.invoice}
-              </span>
-            </div>
-          )}
-          {customer?.namapelanggan && (
-            <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
-              <span className="text-gray-600 text-sm font-medium">
-                Pelanggan
-              </span>
-              <span className="font-bold text-gray-800 text-sm">
-                {customer?.namapelanggan}
-              </span>
-            </div>
-          )}
+    <GlassCard className="relative overflow-hidden bg-gradient-to-br from-accent/10 to-transparent border-accent/10 !p-3.5">
+      {/* Decorative Glow */}
+      <div className="absolute -top-10 -right-10 w-24 h-24 bg-accent/20 blur-3xl rounded-full" />
+      
+      <div className="relative space-y-2.5">
+        <div className="flex items-center gap-2">
+          <motion.span 
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-1.5 h-1.5 bg-accent rounded-full shadow-[0_0_8px_rgba(0,212,255,0.4)]" 
+          />
+          <h3 className="text-[9px] font-black text-accent uppercase tracking-wider">
+            {!customer?.ispaid ? "Ringkasan Tagihan" : "Detail Transaksi"}
+          </h3>
+        </div>
 
-          {customer?.namaprofile && (
-            <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
-              <span className="text-gray-600 text-sm font-medium">
-                Profile Internet
-              </span>
-              <span className="font-bold text-gray-800 text-sm font-mono">
-                {customer?.namaprofile}
-              </span>
+        <div className="space-y-1.5">
+          {[
+            { label: "Invoice", value: customer?.unpaid?.invoice ?? customer?.paid?.invoice, mono: true },
+            { label: "Pelanggan", value: customer?.namapelanggan },
+            { label: "Layanan", value: customer?.namaprofile, mono: true },
+          ].map((item, i) => item.value && (
+            <div key={i} className="flex justify-between items-center px-3 py-2 bg-white/5 rounded-lg border border-white/5">
+              <span className="text-[11px] font-medium text-slate-500">{item.label}</span>
+              <span className={`text-[11px] font-bold text-white ${item.mono ? "font-mono" : ""}`}>{item.value}</span>
             </div>
-          )}
+          ))}
 
-          {customer?.unpaid?.total && (
-            <div className="flex justify-between items-center p-3 bg-green-100 rounded-xl border border-green-200">
-              <span className="text-green-800 text-sm font-bold">
-                Total Pembayaran
-              </span>
-              <span className="text-green-700 text-lg font-extrabold">
-                {formatRupiah(Number(customer?.unpaid?.total))}
+          {(customer?.unpaid?.total ?? customer?.paid?.total) && (
+            <div className="mt-2 px-3 py-2.5 bg-accent/10 rounded-xl border border-accent/20 flex justify-between items-center">
+              <span className="text-[10px] font-black text-accent uppercase tracking-tighter">Total Bayar</span>
+              <span className="text-lg font-black text-white leading-none">
+                {formatRupiah(Number(customer?.unpaid?.total ?? customer?.paid?.total))}
               </span>
             </div>
           )}
         </div>
-      </IonCardContent>
-    </IonCard>
+      </div>
+    </GlassCard>
   );
 };
 
+
 export default React.memo(PaymentSummaryCard);
+

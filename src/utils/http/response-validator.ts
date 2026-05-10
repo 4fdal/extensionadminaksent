@@ -27,6 +27,8 @@ export const validateHttpResponse = <T>(
   response: HttpResponse,
   context?: string,
 ): T | null => {
+
+
   const contextStr = context ? `(${context}) ` : "";
 
   // 1. Validate status code
@@ -64,7 +66,7 @@ export const validateHttpResponse = <T>(
       if (data.trim().startsWith("{") || data.trim().startsWith("[")) {
         return JSON.parse(data) as T;
       }
-      
+
       // If it's a string but doesn't look like JSON, it might be a raw error message
       console.error(`[HTTP Error] ${contextStr}Received non-JSON string data:`, data.substring(0, 200));
       return null;

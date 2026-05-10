@@ -1,7 +1,8 @@
 import React from "react";
-import { IonModal, IonButton, IonIcon } from "@ionic/react";
-import { checkmarkCircle } from "ionicons/icons";
-import { Customer } from "@/types/customer";
+import { IonModal, IonIcon } from "@ionic/react";
+import { checkmarkCircle, close } from "ionicons/icons";
+import GlassButton from "../ui/GlassButton";
+import { motion } from "framer-motion";
 
 type PaymentConfirmationModalProps = {
   isOpen: boolean;
@@ -20,47 +21,60 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
     <IonModal
       isOpen={isOpen}
       onDidDismiss={onDismiss}
-      className="confirm-modal"
-      breakpoints={[0, 0.45]}
-      initialBreakpoint={0.45}
+      className="glass-modal-confirm"
+      breakpoints={[0, 0.5]}
+      initialBreakpoint={0.5}
     >
-      <div className="p-6 bg-white flex flex-col  h-full">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <IonIcon icon={checkmarkCircle} className="text-4xl text-blue-500" />
+      <div className="glass-dark h-full p-8 flex flex-col gap-6">
+        <div className="flex justify-center">
+          <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center border border-primary/30 relative">
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 bg-primary blur-2xl rounded-full"
+            />
+            <IonIcon icon={checkmarkCircle} className="text-4xl text-primary relative z-10" />
           </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
-            Konfirmasi Pembayaran
-          </h2>
-          <p className="text-gray-500 text-sm mb-6">
-            Apakah anda yakin ingin menyelesaikan pembayaran untuk{" "}
-            <span className="font-bold text-gray-800">
-              {customerName}
-            </span>?
+        </div>
+
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-black text-white tracking-tight">Konfirmasi Bayar</h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Apakah Anda yakin ingin memproses pelunasan untuk pelanggan{" "}
+            <span className="text-white font-bold">{customerName}</span>?
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <IonButton
-            expand="block"
-            className="h-12 font-bold"
-            style={{ "--border-radius": "14px" }}
+        <div className="flex flex-col gap-3 mt-4">
+          <GlassButton
+            variant="primary"
+            size="lg"
+            className="w-full font-black tracking-widest"
             onClick={onConfirm}
           >
-            Ya, Selesaikan
-          </IonButton>
-          <IonButton
-            expand="block"
-            fill="clear"
-            className="h-12 font-bold text-gray-500"
+            YA, SELESAIKAN
+          </GlassButton>
+          <GlassButton
+            variant="ghost"
+            size="lg"
+            className="w-full text-slate-500 font-bold"
             onClick={onDismiss}
           >
-            Batal
-          </IonButton>
+            Kembali
+          </GlassButton>
         </div>
       </div>
+
+      <style>{`
+        .glass-modal-confirm::part(content) {
+          background: transparent;
+          backdrop-filter: blur(20px);
+          border-radius: 32px 32px 0 0;
+        }
+      `}</style>
     </IonModal>
   );
 };
 
 export default React.memo(PaymentConfirmationModal);
+

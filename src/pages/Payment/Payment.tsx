@@ -2,22 +2,14 @@
 import React, { useState, useEffect } from "react";
 import {
   IonContent,
-  IonLabel,
-  IonCard,
-  IonCardContent,
   IonIcon,
-  IonButton,
-  IonText,
-  IonLoading,
   useIonToast,
+  IonActionSheet,
 } from "@ionic/react";
-import { checkmarkCircle, arrowForward } from "ionicons/icons";
+import { checkmarkCircle, arrowForward, image, calendar, person } from "ionicons/icons";
 import ImagePicker from "@/components/input/ImagePicker";
 import { useAppContext } from "@/context/app-context";
 import { Customer } from "@/types/customer";
-import {
-  formatRupiah,
-} from "@/utils";
 import SelectCustomer from "@/components/customer/SelectCustomer";
 import DateTimeInput from "@/components/input/DateTimeInput";
 import { format } from "date-fns";
@@ -29,10 +21,12 @@ import {
   Payment,
 } from "@/utils/payment";
 import { useHistory } from "react-router";
-import DetailCardCustomer from "@/components/customer/DetailCardCustomer";
 import PaymentSummaryCard from "@/components/payment/PaymentSummaryCard";
 import PaymentConfirmationModal from "@/components/payment/PaymentConfirmationModal";
 import PaymentExistsWarning from "@/components/payment/PaymentExistsWarning";
+import GlassCard from "@/components/ui/GlassCard";
+import GlassButton from "@/components/ui/GlassButton";
+import { motion } from "framer-motion";
 
 const PaymentPage: React.FC = () => {
   const [present] = useIonToast();
@@ -44,20 +38,13 @@ const PaymentPage: React.FC = () => {
   const [loadingRequest, setLoadingRequest] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>("");
 
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null,
-  );
-  const [paymentDate, setPaymentDate] = useState<string>(
-    format(new Date(), "yyyy-MM-dd HH:ii:ss"),
-  );
-  const [imagePaymentSource, setImagePaymentSource] = useState<string | null>(
-    null,
-  );
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [paymentDate, setPaymentDate] = useState<string>(format(new Date(), "yyyy-MM-dd HH:mm:ss"));
+  const [imagePaymentSource, setImagePaymentSource] = useState<string | null>(null);
 
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [modalPaymentExits, setModalPaymentExits] = useState<boolean>(false);
-  const [modalDataPaymentExits, setModalDataPaymentExits] =
-    useState<Customer | null>(null);
+  const [modalDataPaymentExits, setModalDataPaymentExits] = useState<Customer | null>(null);
 
   useEffect(() => {
     if (imageShare?.imageFile) {
@@ -74,7 +61,6 @@ const PaymentPage: React.FC = () => {
       const selected = customerContext?.customers.find(
         (customer) => (customer.unpaid ?? customer.paid)?.invoice == invoice,
       );
-
       if (selected) setSelectedCustomer(selected);
     }
   }, [window.location, customerContext?.customers]);
@@ -82,23 +68,16 @@ const PaymentPage: React.FC = () => {
   useEffect(() => {
     (async () => {
       if (customerContext?.customers.length == 0) {
-        try {
-          await customerContext?.reqAllCustomers(false);
-        } catch (error) {
-          console.error("[error] customerContext : ", error);
-        }
+        try { await customerContext?.reqAllCustomers(false); } catch (error) { console.error(error); }
       }
-
       if (paymentList == null) {
         try {
           const payments = await HttpPaymentApi.getAll();
           setPaymentList(payments);
-        } catch (error) {
-          console.error("[error] HttpPaymentApi.getAll : ", error);
-        }
+        } catch (error) { console.error(error); }
       }
     })();
-    setPaymentDate(format(new Date(), "dd/MM/yyyy HH:ii:ss"));
+    setPaymentDate(format(new Date(), "dd/MM/yyyy HH:mm:ss"));
   }, []);
 
   const handlePaymentSubmit = () => {
@@ -116,153 +95,98 @@ const PaymentPage: React.FC = () => {
       const updatedCustomer = { ...selectedCustomer };
       setShowConfirmModal(false);
       setLoadingRequest(true);
-      setLoadingMessage("Menghubungkan ke server Rlradius...");
-        try {
-          if (updatedCustomer.unpaid) {
-            const resRlradiusPayment = await HttpPaymentRlradius.setLunas(
-              updatedCustomer.unpaid?.invoice,
-            );
-
-            if (!resRlradiusPayment?.success) {
-              present({
-                message: `Rlradius, ${resRlradiusPayment?.pesan}`,
-                position: "bottom",
-                duration: 1500,
-                color: "danger",
-              });
-            }
-
-            updatedCustomer.paid = {
-              invoice: updatedCustomer.unpaid.invoice,
-              isrollback: 0,
-              namakategoriinvoice: updatedCustomer.unpaid.namakategoriinvoice,
-              nolayanan: updatedCustomer.unpaid.nolayanan,
-              pelanggan: updatedCustomer.unpaid.pelanggan,
-              username: updatedCustomer.unpaid.username,
-              namapelanggan: updatedCustomer.unpaid.namapelanggan,
-              namaprofile: updatedCustomer.unpaid.namaprofile,
-              mitra: updatedCustomer.mitra.toString(),
-              komisi: "",
-              subtotal: updatedCustomer.unpaid.subtotal,
-              diskon: updatedCustomer.unpaid.diskon,
-              ppn: updatedCustomer.unpaid.ppn,
-              kodeunik: updatedCustomer.unpaid.kodeunik.toString(),
-              total: updatedCustomer.unpaid.total,
-              biller: "",
-              tglbayar: datePayment,
-              jambayar: timePayment,
-              carabayar: "",
-              namachannel: "",
-              paycode: "",
-              catatan: updatedCustomer.unpaid.catatan,
-              lastupdate: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
-            };
-            updatedCustomer.ispaid = true;
-            updatedCustomer.unpaid = undefined;
+      setLoadingMessage("Menghubungkan ke server...");
+      try {
+        if (updatedCustomer.unpaid) {
+          const resRlradiusPayment = await HttpPaymentRlradius.setLunas(updatedCustomer.unpaid?.invoice);
+          if (!resRlradiusPayment?.success) {
+            present({ message: `Gagal: ${resRlradiusPayment?.pesan}`, color: "danger", duration: 2000 });
           }
-
-          if (!updatedCustomer.payment) {
-            const reqPayment: Payment = {
-              id: undefined,
-              nolayanan: updatedCustomer?.nolayanan,
-              namapelanggan: updatedCustomer?.namapelanggan,
-              total: Number(
-                (updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.total,
-              ),
-              invoice: String(
-                (updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.invoice,
-              ),
-              tanggalbayar: datePayment,
-              waktubayar: timePayment,
-              gambar: imagePaymentSource,
-              created_at: undefined,
-              updated_at: undefined,
-            };
-
-            setLoadingMessage("Menyimpan bukti pembayaran...");
-            const resPayment = await HttpPaymentApi.create(reqPayment);
-
-            console.log({ resPayment });
-
-            reqPayment.id = resPayment?.id;
-            updatedCustomer.payment = reqPayment;
-          }
-
-          const findIndex = customerContext?.customers.findIndex(
-            (item) => item.nolayanan == updatedCustomer.nolayanan,
-          );
-          if (findIndex != undefined && findIndex != -1 && customerContext) {
-            const updatedCustomers = [...customerContext.customers];
-            updatedCustomers[findIndex] = updatedCustomer;
-            customerContext.setCustomers(updatedCustomers);
-          }
-
-          setLoadingMessage("Menyelesaikan proses...");
-          // await customerContext?.reqAllCustomers(true);
-          setImagePaymentSource(null);
-          setSelectedCustomer(null);
-
-          present({
-            message: "Berhasil melakukan pembayaran",
-            position: "bottom",
-            duration: 1500,
-            color: "primary",
-          });
-
-          history.replace("/customer");
-        } catch (error) {
-          console.error("[error] handlePaymentSubmit : ", { error });
-          let message = "Ada sesuatu yang error! ";
-          if (error instanceof Error) {
-            message += " " + error.message;
-          }
-          present({
-            message,
-            position: "bottom",
-            duration: 1500,
-            color: "danger",
-          });
-
-          if (error instanceof Error) {
-            // logError is deprecated, using console.error for now or a centralized logger if available
-            console.error(error);
-          }
+          updatedCustomer.paid = {
+            invoice: updatedCustomer.unpaid.invoice,
+            nolayanan: updatedCustomer.unpaid.nolayanan,
+            pelanggan: updatedCustomer.unpaid.pelanggan,
+            username: updatedCustomer.unpaid.username,
+            namapelanggan: updatedCustomer.unpaid.namapelanggan,
+            namaprofile: updatedCustomer.unpaid.namaprofile,
+            mitra: updatedCustomer.mitra.toString(),
+            subtotal: updatedCustomer.unpaid.subtotal,
+            diskon: updatedCustomer.unpaid.diskon,
+            ppn: updatedCustomer.unpaid.ppn,
+            kodeunik: updatedCustomer.unpaid.kodeunik.toString(),
+            total: updatedCustomer.unpaid.total,
+            tglbayar: datePayment,
+            jambayar: timePayment,
+            catatan: updatedCustomer.unpaid.catatan,
+            lastupdate: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
+            namakategoriinvoice: updatedCustomer.unpaid.namakategoriinvoice,
+            isrollback: 0,
+            komisi: "",
+            biller: "",
+            carabayar: "",
+            namachannel: "",
+            paycode: "",
+          };
+          updatedCustomer.ispaid = true;
+          updatedCustomer.unpaid = undefined;
         }
-        setLoadingRequest(false);
+
+        if (!updatedCustomer.payment) {
+          const reqPayment: Payment = {
+            id: undefined,
+            nolayanan: updatedCustomer?.nolayanan,
+            namapelanggan: updatedCustomer?.namapelanggan,
+            total: Number((updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.total),
+            invoice: String((updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.invoice),
+            tanggalbayar: datePayment,
+            waktubayar: timePayment,
+            gambar: imagePaymentSource,
+            created_at: undefined,
+            updated_at: undefined,
+          };
+          const resPayment = await HttpPaymentApi.create(reqPayment);
+          reqPayment.id = resPayment?.id;
+          updatedCustomer.payment = reqPayment;
+        }
+
+        const findIndex = customerContext?.customers.findIndex(item => item.nolayanan == updatedCustomer.nolayanan);
+        if (findIndex !== undefined && findIndex !== -1 && customerContext) {
+          const updatedCustomers = [...customerContext.customers];
+          updatedCustomers[findIndex] = updatedCustomer;
+          customerContext.setCustomers(updatedCustomers);
+        }
+
+        setLoadingMessage("Selesai!");
+        setImagePaymentSource(null);
+        setSelectedCustomer(null);
+        present({ message: "Berhasil melakukan pembayaran", color: "primary", duration: 1500 });
+        history.replace("/customer");
+      } catch (error) {
+        console.error(error);
+        present({ message: "Terjadi kesalahan sistem", color: "danger", duration: 2000 });
+      }
+      setLoadingRequest(false);
     }
   };
 
   const handleChangeDateTimeInput = (strDateTime: string) => {
     setPaymentDate(strDateTime);
-
-    const currPaymentExits: Array<Payment> | undefined = paymentList?.filter(
-      (item) => {
-        // Using new date converter pattern or local formatting if specific
-        const itemDate = new Date(item.tanggalbayar);
-        const itemTime = new Date(item.waktubayar);
-
-        // Manual formatting to match strDateTime format if needed, 
-        // but ideally we use a centralized utility.
-        const HH = String(itemTime.getHours()).padStart(2, "0");
-        const mm = String(itemTime.getMinutes()).padStart(2, "0");
-        const ss = String(itemTime.getSeconds()).padStart(2, "0");
-        const yyyy = String(itemDate.getFullYear()).padStart(4, "0");
-        const MM = String(itemDate.getMonth() + 1).padStart(2, "0");
-        const dd = String(itemDate.getDate()).padStart(2, "0");
-
-        const itemDateTime = `${yyyy}-${MM}-${dd} ${HH}:${mm}:${ss}`;
-        return strDateTime == itemDateTime;
-      },
-    );
-
+    const currPaymentExits = paymentList?.filter(item => {
+      const itemTime = new Date(item.waktubayar);
+      const itemDate = new Date(item.tanggalbayar);
+      const HH = String(itemTime.getHours()).padStart(2, "0");
+      const mm = String(itemTime.getMinutes()).padStart(2, "0");
+      const ss = String(itemTime.getSeconds()).padStart(2, "0");
+      const yyyy = String(itemDate.getFullYear()).padStart(4, "0");
+      const MM = String(itemDate.getMonth() + 1).padStart(2, "0");
+      const dd = String(itemDate.getDate()).padStart(2, "0");
+      return strDateTime === `${yyyy}-${MM}-${dd} ${HH}:${mm}:${ss}`;
+    });
     if (currPaymentExits) setPaymentExits(currPaymentExits);
   };
 
   const handleClickPaymentExitsItem = (item: Payment) => {
-    const customer = customerContext?.customers.find(
-      (custItem) => custItem.nolayanan == item.nolayanan,
-    );
-
+    const customer = customerContext?.customers.find(c => c.nolayanan === item.nolayanan);
     if (customer) {
       customer.payment = item;
       setModalDataPaymentExits(customer);
@@ -274,108 +198,101 @@ const PaymentPage: React.FC = () => {
     <BaseLayout
       loadingPage={loadingRequest}
       loadingMessage={loadingMessage}
-      headerTitle="Pembayaran"
+      headerTitle="Transaksi Pembayaran"
       backHref="/customer"
     >
-      <IonContent fullscreen className="bg-gray-100 ion-padding">
-        {/* Image View Section */}
-        <IonCard className="rounded-xl shadow-sm mb-4 bg-white m-0">
-          <IonCardContent className="p-4">
-            <IonText className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-3">
-              Bukti Pembayaran
-            </IonText>
-
-            <ImagePicker
-              src={imagePaymentSource}
-              onChange={({ path }) => setImagePaymentSource(path)}
-            />
-          </IonCardContent>
-        </IonCard>
-
-        {/* Form Section */}
-        <IonCard className="rounded-xl shadow-sm mb-4 bg-white m-0">
-          <IonCardContent className="p-4">
-            {/* Tanggal dan Waktu Pembayaran */}
-            <div className="mb-5">
-              <IonLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">
-                Tanggal & Waktu Pembayaran
-              </IonLabel>
-              <DateTimeInput
-                value={paymentDate}
-                onChange={handleChangeDateTimeInput}
-              />
-              <PaymentExistsWarning
-                payments={paymentExits}
-                onItemClick={handleClickPaymentExitsItem}
-                showModal={modalPaymentExits}
-                modalData={modalDataPaymentExits}
-                onCloseModal={() => setModalPaymentExits(false)}
-              />
-
+      <div className="space-y-3">
+        {/* Step 1 & 2 Grid on Desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Step 1: Upload Proof */}
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
+                <span className="text-[9px] font-bold text-primary">01</span>
+              </div>
+              <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Bukti Pembayaran</h2>
             </div>
+            <GlassCard className="!p-3 h-[200px] md:h-full flex flex-col">
+              <ImagePicker
+                src={imagePaymentSource}
+                onChange={({ path }) => setImagePaymentSource(path)}
+              />
+            </GlassCard>
+          </section>
 
-            {/* Select Nama Pelanggan dengan Search */}
-            <SelectCustomer
-              data={customerContext?.customers.filter((cust) => cust.unpaid || !cust.payment) ?? []}
-              selected={selectedCustomer}
-              onChange={setSelectedCustomer}
-            />
+          {/* Step 2: Customer & Date */}
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
+                <span className="text-[9px] font-bold text-primary">02</span>
+              </div>
+              <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Informasi Transaksi</h2>
+            </div>
+            <GlassCard className="space-y-3 !p-4">
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                  <IonIcon icon={calendar} className="text-xs" /> Waktu Pembayaran
+                </label>
+                <DateTimeInput
+                  value={paymentDate}
+                  onChange={handleChangeDateTimeInput}
+                />
+                <PaymentExistsWarning
+                  payments={paymentExits}
+                  onItemClick={handleClickPaymentExitsItem}
+                  showModal={modalPaymentExits}
+                  modalData={modalDataPaymentExits}
+                  onCloseModal={() => setModalPaymentExits(false)}
+                />
+              </div>
 
-            {/* No Invoice */}
-          </IonCardContent>
-        </IonCard>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                  <IonIcon icon={person} className="text-xs" /> Pilih Pelanggan
+                </label>
+                <SelectCustomer
+                  data={customerContext?.customers.filter((cust) => cust.unpaid || !cust.payment) ?? []}
+                  selected={selectedCustomer}
+                  onChange={setSelectedCustomer}
+                />
+              </div>
+            </GlassCard>
+          </section>
+        </div>
 
-        {/* Submit Button */}
-        <IonButton
-          expand="block"
-          size="large"
-          onClick={handlePaymentSubmit}
-          disabled={!selectedCustomer || !imagePaymentSource || !paymentDate}
-          className={`rounded-2xl mt-2 h-14 font-bold text-base tracking-wide shadow-xl shadow-blue-500/30 ${!selectedCustomer ? "opacity-50" : "hover:shadow-2xl hover:shadow-blue-500/40 transform hover:-translate-y-0.5 transition-all"}`}
-        >
-          <IonIcon icon={checkmarkCircle} slot="start" className="mr-2" />
-          Simpan Pembayaran
-          <IonIcon icon={arrowForward} slot="end" className="ml-2" />
-        </IonButton>
+        {/* Step 3: Summary & Action */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
+              <span className="text-[9px] font-bold text-primary">03</span>
+            </div>
+            <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Ringkasan & Konfirmasi</h2>
+          </div>
+          
+          <PaymentSummaryCard customer={selectedCustomer} />
 
-        {/* Summary Card */}
-        <PaymentSummaryCard customer={selectedCustomer} />
+          <GlassButton
+            size="lg"
+            className="w-full h-14 text-base font-black tracking-wide group !rounded-xl"
+            disabled={!selectedCustomer || !imagePaymentSource || !paymentDate}
+            onClick={handlePaymentSubmit}
+          >
+            <IonIcon icon={checkmarkCircle} className="text-xl" />
+            SIMPAN PEMBAYARAN
+            <IonIcon icon={arrowForward} className="text-xl group-hover:translate-x-1 transition-transform" />
+          </GlassButton>
+        </section>
 
-        <PaymentConfirmationModal
-          isOpen={showConfirmModal}
-          onDismiss={() => setShowConfirmModal(false)}
-          onConfirm={processPayment}
-          customerName={selectedCustomer?.namapelanggan}
-        />
+        <div className="h-4" />
+      </div>
 
-        <div className="mb-10"></div>
-      </IonContent>
 
-      {/* CSS untuk animasi */}
-      <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        
-        .customer-modal, .confirm-modal {
-          --border-radius: 24px 24px 0 0;
-        }
-      `}</style>
+      <PaymentConfirmationModal
+        isOpen={showConfirmModal}
+        onDismiss={() => setShowConfirmModal(false)}
+        onConfirm={processPayment}
+        customerName={selectedCustomer?.namapelanggan}
+      />
     </BaseLayout>
   );
 };

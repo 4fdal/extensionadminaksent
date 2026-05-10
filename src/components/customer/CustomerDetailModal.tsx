@@ -1,10 +1,10 @@
 import React from "react";
-import { IonModal, IonButton, IonIcon } from "@ionic/react";
-import { search } from "ionicons/icons";
+import { IonModal, IonIcon } from "@ionic/react";
+import { search, close } from "ionicons/icons";
 import { Customer } from "@/types/customer";
-import { UI_CONFIG } from "@/config";
 import PaymentDetailCustomer from "./PaymentDetailCustomer";
 import { useHistory } from "react-router";
+import GlassButton from "../ui/GlassButton";
 
 type CustomerDetailModalProps = {
   customer: Customer | null;
@@ -25,51 +25,71 @@ const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
     <IonModal
       isOpen={isOpen}
       onDidDismiss={onDismiss}
-      breakpoints={[...UI_CONFIG.MODAL_BREAKPOINTS]}
-      initialBreakpoint={UI_CONFIG.MODAL_INITIAL_BREAKPOINT}
-      handleBehavior="cycle"
-      className="customer-modal"
+      breakpoints={[0, 0.8, 1]}
+      initialBreakpoint={0.8}
+      className="glass-modal"
     >
-      {customer.payment ? (
-        <div className="p-2 mt-2 flex flex-col gap-2 h-full">
-          <PaymentDetailCustomer data={customer.payment} />
-          <IonButton
-            style={{
-              "--border-radius": UI_CONFIG.BORDER_RADIUS_ROUNDED,
-            }}
-            onClick={onDismiss}
-          >
-            Close
-          </IonButton>
-          <div className="mb-10"></div>
-        </div>
-      ) : (
-        <div className="text-center p-12">
-          <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-            <IonIcon icon={search} className="text-4xl text-gray-400" />
+      <div className="glass-dark h-full p-4 flex flex-col gap-4">
+        <div className="flex justify-between items-center border-b border-white/5 pb-3">
+          <div>
+            <h2 className="text-lg font-black text-white tracking-tight">Detail Pembayaran</h2>
+            <p className="text-slate-500 text-xs">{customer.namapelanggan}</p>
           </div>
-          <h3 className="text-gray-800 font-semibold text-lg mb-2">
-            Tidak ada data pembayaran
-          </h3>
-          <p className="text-gray-500 text-sm">
-            Coba lakukan proses sync pembayaran terlebih dahulu!
-          </p>
-          <IonButton
-            className="mt-3"
-            style={{
-              "--border-radius": UI_CONFIG.BORDER_RADIUS_ROUNDED,
-            }}
-            onClick={() => {
-              history.push("/payment?invoice=" + customer.paid?.invoice);
-              onDismiss();
-            }}
-          >
-            Sync Pembayaran
-          </IonButton>
+          <GlassButton variant="ghost" size="sm" onClick={onDismiss} className="!p-1.5">
+            <IonIcon icon={close} className="text-xl" />
+          </GlassButton>
         </div>
-      )}
+
+        <div className="flex-1 overflow-y-auto">
+          {customer.payment ? (
+            <div className="space-y-4">
+              <PaymentDetailCustomer data={customer.payment} />
+              <GlassButton variant="secondary" size="sm" className="w-full" onClick={onDismiss}>
+                Tutup Detail
+              </GlassButton>
+            </div>
+          ) : (
+            <div className="text-center py-8 px-4">
+              <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10">
+                <IonIcon icon={search} className="text-3xl text-slate-700" />
+              </div>
+              <h3 className="text-white font-bold text-base mb-1">
+                Tidak Ada Riwayat
+              </h3>
+              <p className="text-slate-600 text-xs mb-6">
+                Data pembayaran digital belum tersedia untuk pelanggan ini.
+              </p>
+              
+              {customer.paid && (
+                <GlassButton
+                  variant="primary"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    history.push("/payment?invoice=" + customer.paid?.invoice);
+                    onDismiss();
+                  }}
+                >
+                  Sinkronisasi Pembayaran
+                </GlassButton>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="pb-2" />
+      </div>
+
+      <style>{`
+        .glass-modal::part(content) {
+          background: transparent;
+          backdrop-filter: blur(20px);
+          border-radius: 24px 24px 0 0;
+        }
+      `}</style>
+
     </IonModal>
   );
 };
 
 export default React.memo(CustomerDetailModal);
+

@@ -11,7 +11,6 @@ import {
   homeOutline,
   personOutline,
   timeOutline,
-  chatboxEllipsesOutline,
   checkmarkOutline,
   closeCircleOutline,
   warningOutline,
@@ -21,6 +20,9 @@ import { differenceInDays } from "date-fns";
 import { useHistory } from "react-router";
 import { AppLauncher } from "@capacitor/app-launcher";
 import { sendBilToWhatsapp } from "@/utils/payment";
+import GlassCard from "../ui/GlassCard";
+import GlassButton from "../ui/GlassButton";
+import { motion } from "framer-motion";
 
 type DetailCardCustomerProp = {
   customer?: Customer;
@@ -31,7 +33,6 @@ type DetailCardCustomerProp = {
 
 const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
   const history = useHistory();
-
   const { customer } = props;
 
   const { overdueDays, isOverdue } = useMemo(() => {
@@ -44,21 +45,22 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
       isOverdue: now > isolirDate,
     };
   }, [customer?.tglisolir]);
+
   const [showComplaintModal, setShowComplaintModal] = useState<boolean>(false);
   const [complaintText, setComplaintText] = useState<string>("");
 
+  const statusLabel = useMemo(() => {
+    if (customer?.isolirmanual) return "Isolir";
+    if (customer?.aktif) return "Active";
+    return "Deactive";
+  }, [customer?.isolirmanual, customer?.aktif]);
+
   const sendComplaintToWhatsapp = async () => {
     if (!props.customer || !complaintText) return;
-
-    const message = `Halo, saya ingin melaporkan keluhan untuk pelanggan:
-Nama: ${props.customer.namapelanggan}
-Layanan: ${props.customer.nolayanan}
-Keluhan: ${complaintText}`;
-
+    const message = `Halo, saya ingin melaporkan keluhan untuk pelanggan:\nNama: ${props.customer.namapelanggan}\nLayanan: ${props.customer.nolayanan}\nKeluhan: ${complaintText}`;
     const encodedMessage = encodeURIComponent(message);
     const phone = props.customer.profile?.phone;
     const formattedPhone = phone ? `62${phone.substring(1)}` : "";
-
     if (formattedPhone) {
       await AppLauncher.openUrl({
         url: `whatsapp://send?phone=${formattedPhone}&text=${encodedMessage}`,
@@ -68,328 +70,224 @@ Keluhan: ${complaintText}`;
     setComplaintText("");
   };
 
-  const statusLabel = useMemo(() => {
-    if (customer?.isolirmanual) return "Isolir";
-    if (customer?.aktif) return "Active";
-    return "Deactive";
-  }, [customer?.isolirmanual, customer?.aktif]);
-
-  const cardClassName = useMemo(() => {
-    const baseClass =
-      "relative bg-white rounded-2xl shadow-sm border-2 transition-all duration-200 overflow-hidden";
-    const statusClass = customer?.isolirmanual
-      ? "border-red-500 shadow-md"
-      : "border-transparent hover:border-gray-200";
-    return `${baseClass} ${statusClass}`;
-  }, [customer?.isolirmanual]);
-
   return (
-    <div
-      className={cardClassName}
-      style={{ animationDelay: `${50}ms` }}
+    <GlassCard 
+      className={customer?.isolirmanual ? "border-red-500/30 bg-red-500/5" : ""}
+      animate
     >
+      <div className="flex flex-col gap-3">
+        {/* Compact Card Header */}
+        <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-2.5">
+          <div className="flex items-center gap-2.5">
+            {props.onSelect && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  props.onSelect?.();
+                }}
+                className={`w-4.5 h-4.5 rounded-md border-2 flex items-center justify-center transition-all ${
+                  props.isSelected
+                    ? "bg-primary border-primary text-white"
+                    : "bg-white/5 border-white/10 hover:border-white/30"
+                }`}
+              >
+                {props.isSelected && <IonIcon icon={checkmarkOutline} className="text-[9px]" />}
+              </button>
+            )}
+            <div className="flex items-center gap-1.5">
+              <span className={`text-[9px] font-bold uppercase tracking-tight ${customer?.isolirmanual ? "text-red-400" : "text-primary"}`}>
+                {statusLabel}
+              </span>
+              <span className="w-0.5 h-0.5 bg-white/10 rounded-full"></span>
+              <span className="text-[10px] font-mono font-medium text-slate-500">
+                {props.customer?.unpaid?.invoice ?? props.customer?.paid?.invoice}
+              </span>
+            </div>
+          </div>
 
-      {/* Card Header - Status & Invoice */}
-      <div
-        className={`px-4 pt-3 pb-2 border-b cursor-pointer flex items-center gap-3`}
-        onClick={() => {}}
-      >
-        {props.onSelect && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              props.onSelect?.();
-            }}
-            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-              props.isSelected
-                ? "bg-blue-500 border-blue-500 text-white"
-                : "bg-white border-gray-400 hover:border-blue-400"
-            }`}
-          >
-            {props.isSelected && <IonIcon icon={checkmarkOutline} className="text-[10px]" />}
-          </button>
-        )}
-        <div className="flex items-center justify-between flex-1 pr-1">
           <div className="flex items-center gap-2">
-            {/* <span className={`w-2 h-2 rounded-full`}></span> */}
-            <span
-              className={`text-xs font-bold uppercase ${!customer?.isolirmanual ? "text-blue-500" : ""}`}
-            >
-              {statusLabel}
-            </span>
-            <span className="text-gray-300">|</span>
-            <span className="text-xs font-mono font-semibold text-gray-600">
-              {props.customer?.unpaid?.invoice ?? props.customer?.paid?.invoice}
-            </span>
-            {props.customer?.payment && (
-              <>
-                <span className="text-gray-300">|</span>
-                <span className="text-xs font-mono font-semibold  flex-1 bg-green-100 text-green-800 px-2 rounded-4xl">
-                  {dateTimeConvertToString(
-                    new Date(props.customer?.payment.tanggalbayar),
-                    new Date(props.customer?.payment.waktubayar),
-                  )}
-                </span>
-              </>
-            )}
-            {!props.customer?.payment && props.customer?.paid && (
-              <>
-                <button
-                  onClick={() => {
-                    history.push(
-                      "/payment?invoice=" + props.customer?.paid?.invoice,
-                    );
-                  }}
+            {props.customer?.payment ? (
+              <span className="text-[9px] font-black bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20">
+                LUNAS
+              </span>
+            ) : (
+              !props.customer?.ispaid && (
+                <motion.span 
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-[9px] font-black bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20"
                 >
-                  <div className="text-xs bg-orange-100 px-2 rounded-2xl text-orange-800 hover:bg-orange-200 active:bg-orange-200 ">
-                    Sync Pembayaran
-                  </div>
-                </button>
-              </>
-            )}
-            {!props.customer?.paid && !props.customer?.unpaid && (
-              <div className="text-xs bg-black text-white rounded-4xl px-2 font-bold ">
-                Pelanggan Baru
-              </div>
+                  UNPAID
+                </motion.span>
+              )
             )}
           </div>
         </div>
-      </div>
 
-      {/* Card Body */}
-      <div className="p-4 pl-10 cursor-pointer" onClick={() => { }}>
-        {/* Pelanggan Info */}
-        <div className="flex items-start gap-3 mb-3">
-          <div
-            className={`w-10 h-10 rounded-xl  flex items-center justify-center text-white shadow-md flex-shrink-0`}
-          >
-            <IonIcon icon={personOutline} className="text-lg text-blue-400" />
+        {/* Compact Card Body */}
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center border border-white/10 shadow-inner flex-shrink-0">
+            <IonIcon icon={personOutline} className="text-base text-white" />
           </div>
-          <div className="flex-1 min-w-0 pr-8">
-            <span className="font-bold text-gray-800 text-[18px] leading-6 block truncate">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-bold text-white truncate leading-tight">
               {props.customer?.namapelanggan}
-            </span>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-semibold rounded">
+            </h3>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] text-slate-400 font-medium">
                 {props.customer?.namasubkategori}
               </span>
-              <span className="text-[10px] text-gray-400 font-mono">
+              <span className="w-0.5 h-0.5 bg-white/10 rounded-full"></span>
+              <span className="text-[10px] text-slate-500 font-mono">
                 {props.customer?.nolayanan}
               </span>
-              {!props.customer?.ispaid && (
-                <span
-                  onClick={() => {
-                    if (props.customer) sendBilToWhatsapp(props.customer);
-                  }}
-                  className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded animate-pulse"
-                >
-                  TAGIH
-                </span>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Details Grid */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <IonIcon icon={businessOutline} className="text-gray-400" />
-            <span className="truncate">{props.customer?.namaprofile}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <IonIcon icon={homeOutline} className="text-gray-400" />
-            <span
-              className={`px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-600`}
-            >
-              {props.customer?.alamatpemasangan}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <IonIcon icon={calendarOutline} className="text-gray-400" />
-            <span>Aktif: {formatDate(props.customer?.tglaktif ?? "")}</span>
-          </div>
-          <div
-            className={`flex items-center gap-2 text-xs font-semibold ${isOverdue
-              ? "text-red-500"
-              : "text-gray-400"
-              }`}
-          >
-            <IonIcon
-              icon={timeOutline}
-              className={
-                isOverdue
-                  ? "text-red-500"
-                  : "text-gray-400"
-              }
-            />
-            <span>
-              {isOverdue
-                ? `Terlambat ${overdueDays} hari`
-                : `${overdueDays} hari lagi`}
-            </span>
-          </div>
+        {/* Tight Details Grid */}
+        <div className="grid grid-cols-2 gap-y-1.5 gap-x-3 py-1">
+          {[
+            { icon: homeOutline, value: props.customer?.alamatpemasangan },
+            { icon: timeOutline, value: isOverdue ? `Telat ${overdueDays}d` : `${overdueDays}d lagi`, color: isOverdue ? "text-red-400" : "" },
+            { icon: businessOutline, value: props.customer?.namaprofile },
+            { icon: calendarOutline, value: `Sejak ${formatDate(props.customer?.tglaktif ?? "")}` }
+          ].map((item, idx) => (
+            <div key={idx} className="flex items-center gap-1.5 min-w-0">
+              <IonIcon icon={item.icon} className={`text-xs ${item.color || "text-slate-500"}`} />
+              <span className={`text-[11px] truncate ${item.color || "text-slate-400"}`}>{item.value}</span>
+            </div>
+          ))}
         </div>
 
-        {/* Financial Summary */}
+        {/* Compact Financial Info */}
         {props.customer?.unpaid && (
-          <div className="bg-gray-50 rounded-xl p-3 space-y-1">
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>Subtotal</span>
-              <span>
-                {formatRupiah(Number(props.customer?.unpaid?.subtotal))}
-              </span>
-            </div>
-            {Number(props.customer?.unpaid?.diskon) > 0 && (
-              <div className="flex justify-between text-xs text-green-600">
-                <span>Diskon 20%</span>
-                <span>
-                  -{formatRupiah(Number(props.customer?.unpaid?.diskon))}
-                </span>
-              </div>
-            )}
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>PPN (11%)</span>
-              <span>{formatRupiah(Number(props.customer?.unpaid?.ppn))}</span>
-            </div>
-            <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
-              <span className="text-xs font-bold text-gray-700">TOTAL</span>
-              <span className="text-sm font-bold text-gray-800">
+          <div className="bg-white/5 rounded-xl px-3 py-2 border border-white/5 flex justify-between items-center">
+            <div className="flex flex-col">
+              <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter leading-none">TOTAL TAGIHAN</span>
+              <span className="text-xs font-black text-accent mt-0.5">
                 {formatRupiah(Number(props.customer?.unpaid?.total))}
               </span>
             </div>
+            <div className="text-[10px] text-slate-400 font-medium opacity-50">
+              {formatRupiah(Number(props.customer?.unpaid?.total))}
+            </div>
           </div>
         )}
 
-        {/* Note */}
-        {props.customer?.catatan && (
-          <div className="mt-3 p-2 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-2">
-            <IonIcon
-              icon={alertCircleOutline}
-              className="text-amber-500 text-sm flex-shrink-0 mt-0.5"
-            />
-            <p className="text-[11px] text-amber-700 leading-relaxed">
-              {props.customer?.catatan}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Action Buttons */}
-      <div className="px-4 pb-4 pl-10 flex-1 flex flex-row justify-between gap-2">
-        <div className="flex-1 flex flex-row gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowComplaintModal(true);
-            }}
-            className="flex-1"
+        {/* Tight Action Bar */}
+        <div className="flex items-center gap-1.5 pt-1">
+          <GlassButton
+            variant="secondary"
+            size="sm"
+            className="flex-1 !py-2"
+            onClick={(e) => { e.stopPropagation(); setShowComplaintModal(true); }}
           >
-            <span className=" px-3 py-2 flex-row  bg-yellow-50 text-yellow-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
-              <IonIcon icon={warningOutline} className="text-sm" />
-              Keluhan
-            </span>
-          </button>
-          <button
+            <IonIcon icon={warningOutline} className="text-xs" />
+            <span className="text-[10px]">Keluhan</span>
+          </GlassButton>
+          
+          <GlassButton
+            variant="secondary"
+            size="sm"
+            className="flex-1 !py-2"
             onClick={async (e) => {
               e.stopPropagation();
               await AppLauncher.openUrl({
                 url: `whatsapp://send?phone=62${props.customer?.profile?.phone.substring(1)}`,
               });
             }}
-            className="flex-1"
           >
-            <span className=" px-3 py-2 flex-row  bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
-              <IonIcon icon={callOutline} className="text-sm" />
-              Hubungi
-            </span>
-          </button>
+            <IonIcon icon={callOutline} className="text-xs" />
+            <span className="text-[10px]">Chat</span>
+          </GlassButton>
+
           {!props.customer?.ispaid && (
-            <button
+            <GlassButton
+              variant="primary"
+              size="sm"
+              className="flex-[1.2] !py-2"
               onClick={(e) => {
                 e.stopPropagation();
-                history.push(
-                  "/payment?invoice=" + props.customer?.unpaid?.invoice,
-                );
+                history.push("/payment?invoice=" + props.customer?.unpaid?.invoice);
               }}
-              className="flex-1"
             >
-              <span className=" px-3 py-2 flex-row items-center bg-green-50 text-green-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors flex justify-center gap-1">
-                <IonIcon icon={cashOutline} className="text-sm" />
-                Bayar
-              </span>
-            </button>
+              <IonIcon icon={cashOutline} className="text-xs" />
+              <span className="text-[10px]">Bayar</span>
+            </GlassButton>
+          )}
+
+          {props.customer?.paid && (
+            <GlassButton
+              variant="secondary"
+              size="sm"
+              className="!p-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (props.onClickDetail) props.onClickDetail();
+              }}
+            >
+              <IonIcon icon={eyeOutline} className="text-base" />
+            </GlassButton>
           )}
         </div>
-        {props.customer?.paid && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (props.onClickDetail) props.onClickDetail();
-            }}
-          >
-            <span className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
-              <IonIcon icon={eyeOutline} className="text-sm" />
-            </span>
-          </button>
-        )}
       </div>
 
+
+      {/* Glass Complaint Modal */}
       <IonModal
         isOpen={showComplaintModal}
         onDidDismiss={() => setShowComplaintModal(false)}
-        breakpoints={[0, 0.5, 0.7]}
-        initialBreakpoint={0.5}
-        className="complaint-modal"
+        breakpoints={[0, 0.6, 0.8]}
+        initialBreakpoint={0.6}
+        className="glass-modal"
       >
-        <IonHeader className="ion-no-border">
-          <IonToolbar>
-            <IonTitle>Lapor Keluhan</IonTitle>
-            <IonButtons slot="end">
-              <IonButton onClick={() => setShowComplaintModal(false)}>
-                <IonIcon icon={closeCircleOutline} />
-              </IonButton>
-            </IonButtons>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent className="ion-padding">
-          <div className="mb-4">
-            <h4 className="text-sm font-bold text-gray-800 mb-1">
-              {props.customer?.namapelanggan}
-            </h4>
-            <p className="text-xs text-gray-500">
-              Silakan tuliskan detail keluhan pelanggan di bawah ini.
-            </p>
+        <div className="glass-dark h-full p-8 flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <h2 className="text-2xl font-bold text-white">Lapor Keluhan</h2>
+              <p className="text-slate-400 text-sm">Pelanggan: {props.customer?.namapelanggan}</p>
+            </div>
+            <GlassButton variant="ghost" size="sm" onClick={() => setShowComplaintModal(false)} className="!p-2">
+              <IonIcon icon={closeCircleOutline} className="text-2xl" />
+            </GlassButton>
           </div>
 
-          <IonItem className="rounded-xl border border-gray-100 mb-6" lines="none">
-            <IonTextarea
-              placeholder="Contoh: Koneksi internet lambat sejak pagi ini..."
-              rows={6}
+          <div className="flex-1">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Detail Masalah</label>
+            <textarea
+              placeholder="Jelaskan kendala yang dialami pelanggan..."
+              className="w-full h-40 bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
               value={complaintText}
-              onIonInput={(e) => setComplaintText(e.detail.value!)}
-              className="text-sm"
+              onChange={(e) => setComplaintText(e.target.value)}
             />
-          </IonItem>
+          </div>
 
-          <IonButton
-            expand="block"
-            className="h-12 font-bold"
-            style={{ "--border-radius": "14px" }}
-            onClick={sendComplaintToWhatsapp}
+          <GlassButton 
+            variant="primary" 
+            size="lg" 
+            className="w-full"
             disabled={!complaintText.trim()}
+            onClick={sendComplaintToWhatsapp}
           >
-            Kirim ke WhatsApp
-          </IonButton>
-        </IonContent>
+            Kirim Laporan ke WhatsApp
+          </GlassButton>
+        </div>
       </IonModal>
 
       <style>{`
-        .complaint-modal {
-          --border-radius: 24px 24px 0 0;
+        .glass-modal {
+          --background: transparent;
+          --border-radius: 32px 32px 0 0;
+        }
+        .glass-modal::part(content) {
+          background: transparent;
+          backdrop-filter: blur(20px);
         }
       `}</style>
-    </div>
+    </GlassCard>
   );
 };
 
 export default React.memo(DetailCardCustomer);
+

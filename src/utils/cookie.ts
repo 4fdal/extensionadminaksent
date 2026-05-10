@@ -66,7 +66,8 @@ export const isExpiredCookie = async (
       },
     });
 
-    if (response.status != 200 && response.url != url) return true
+
+    if (response.status != 200 || response.url != url) return true
 
     return false;
   } catch (error) {
