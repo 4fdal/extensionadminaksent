@@ -153,7 +153,7 @@ export const SelectCustomer: React.FC<SelectCustomerProp> = (props) => {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="Cari nama, invoice, atau nomor layanan..."
-                className="w-full bg-white/50 border border-white/60 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                className="w-full bg-white/50 border border-slate-300 rounded-lg py-1.5 pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
               />
             </div>
           </div>

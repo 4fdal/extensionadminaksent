@@ -28,7 +28,7 @@ const PaymentExistsWarning: React.FC<PaymentExistsWarningProps> = ({
         <IonIcon icon={warningOutline} className="text-orange-600 text-xl" />
       </div>
       <div>
-        <h4 className="font-bold text-orange-800 text-sm">Waktu Pembayaran</h4>
+        <span className="font-bold text-orange-800 text-sm">Waktu Pembayaran</span>
         <div className="flex flex-col">
           {payments.map((item) => (
             <span

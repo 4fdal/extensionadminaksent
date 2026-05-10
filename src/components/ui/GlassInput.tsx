@@ -28,10 +28,10 @@ const GlassInput: React.FC<GlassInputProps> = ({
         )}
         <input
           className={cn(
-            "w-full bg-white/50 border border-white/60 rounded-lg px-3 py-2 text-sm text-slate-800",
+            "w-full bg-white/50 border border-slate-300 rounded-lg px-3 py-1.5 text-sm text-slate-800",
             "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50",
             "transition-all duration-200",
-            icon && "pl-10",
+            icon && "pl-9",
             className
           )}
           {...props}

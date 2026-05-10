@@ -56,7 +56,7 @@ const DateTimeInput: React.FC<DateTimeInputProp> = ({
           type="date"
           value={currentDate}
           onChange={handleChangeDate}
-          className="w-full bg-white/50 border border-white/60 rounded-xl px-4 py-3 text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+          className="w-full bg-white/50 border border-slate-300 rounded-lg px-3 py-1.5 text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
         />
       </div>
       <div className="flex-1 relative">
@@ -66,7 +66,7 @@ const DateTimeInput: React.FC<DateTimeInputProp> = ({
           value={currentTime}
           onChange={handleChangeTime}
           placeholder="HH:MM:SS"
-          className="w-full bg-white/50 border border-white/60 rounded-xl px-4 py-3 text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-slate-400"
+          className="w-full bg-white/50 border border-slate-300 rounded-lg px-3 py-1.5 text-sm text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-slate-400"
         />
         {currentTime && (
           <button 
