@@ -97,9 +97,9 @@ const ImagePicker: React.FC<ImagePickerProp> = (props) => {
               src={imageScr}
               alt="Preview Bukti Pembayaran"
               drag={scale > 1}
-              dragConstraints={containerRef}
               dragElastic={0.2}
-              animate={{ scale }}
+              dragMomentum={false}
+              animate={{ scale, x: scale === 1 ? 0 : undefined, y: scale === 1 ? 0 : undefined }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}

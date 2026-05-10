@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -7,7 +6,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-interface GlassCardProps extends HTMLMotionProps<"div"> {
+interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   animate?: boolean;
   hoverScale?: boolean;
@@ -23,31 +22,18 @@ const GlassCard: React.FC<GlassCardProps> = ({
   ...props 
 }) => {
   const baseClasses = cn(
-    "glass glass-shadow rounded-2xl p-4 transition-all duration-500",
+    "glass glass-shadow rounded-2xl p-4 transition-all duration-300",
+    hoverScale && "hover:scale-[1.02] hover:bg-white/80 hover:border-white/90 hover:shadow-lg hover:shadow-blue-400/20",
     className
   );
 
-
   return (
-    <motion.div
-      initial={animate ? { opacity: 0, y: 20, scale: 0.95 } : false}
-      animate={animate ? { opacity: 1, y: 0, scale: 1 } : false}
-      whileHover={hoverScale ? { 
-        scale: 1.02, 
-        backgroundColor: "rgba(255, 255, 255, 0.8)",
-        borderColor: "rgba(255, 255, 255, 0.9)",
-        boxShadow: "0 10px 40px rgba(96, 165, 250, 0.2)"
-      } : {}}
-      transition={{ 
-        duration: 0.4, 
-        delay,
-        ease: [0.23, 1, 0.32, 1] 
-      }}
+    <div
       className={baseClasses}
       {...props}
     >
       {children}
-    </motion.div>
+    </div>
   );
 };
 
