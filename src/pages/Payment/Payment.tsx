@@ -113,13 +113,14 @@ const PaymentPage: React.FC = () => {
     const timePayment = splitStrDateTime?.[1];
 
     if (selectedCustomer && imagePaymentSource) {
+      const updatedCustomer = { ...selectedCustomer };
       setShowConfirmModal(false);
       setLoadingRequest(true);
       setLoadingMessage("Menghubungkan ke server Rlradius...");
         try {
-          if (selectedCustomer.unpaid) {
+          if (updatedCustomer.unpaid) {
             const resRlradiusPayment = await HttpPaymentRlradius.setLunas(
-              selectedCustomer.unpaid?.invoice,
+              updatedCustomer.unpaid?.invoice,
             );
 
             if (!resRlradiusPayment?.success) {
@@ -131,45 +132,45 @@ const PaymentPage: React.FC = () => {
               });
             }
 
-            // selectedCustomer.paid = {
-            //   invoice: selectedCustomer.unpaid.invoice,
-            //   isrollback: 0,
-            //   namakategoriinvoice: selectedCustomer.unpaid.namakategoriinvoice,
-            //   nolayanan: selectedCustomer.unpaid.nolayanan,
-            //   pelanggan: selectedCustomer.unpaid.pelanggan,
-            //   username: selectedCustomer.unpaid.username,
-            //   namapelanggan: selectedCustomer.unpaid.namapelanggan,
-            //   namaprofile: selectedCustomer.unpaid.namaprofile,
-            //   mitra: selectedCustomer.mitra.toString(),
-            //   komisi: "",
-            //   subtotal: selectedCustomer.unpaid.subtotal,
-            //   diskon: selectedCustomer.unpaid.diskon,
-            //   ppn: selectedCustomer.unpaid.ppn,
-            //   kodeunik: selectedCustomer.unpaid.kodeunik,
-            //   total: selectedCustomer.unpaid.total,
-            //   biller: "",
-            //   tglbayar: datePayment,
-            //   jambayar: timePayment,
-            //   carabayar: "",
-            //   namachannel: "",
-            //   paycode: "",
-            //   catatan: selectedCustomer.unpaid.catatan,
-            //   lastupdate: "",
-            // };
-            // selectedCustomer.ispaid = true;
-            // selectedCustomer.unpaid = undefined;
+            updatedCustomer.paid = {
+              invoice: updatedCustomer.unpaid.invoice,
+              isrollback: 0,
+              namakategoriinvoice: updatedCustomer.unpaid.namakategoriinvoice,
+              nolayanan: updatedCustomer.unpaid.nolayanan,
+              pelanggan: updatedCustomer.unpaid.pelanggan,
+              username: updatedCustomer.unpaid.username,
+              namapelanggan: updatedCustomer.unpaid.namapelanggan,
+              namaprofile: updatedCustomer.unpaid.namaprofile,
+              mitra: updatedCustomer.mitra.toString(),
+              komisi: "",
+              subtotal: updatedCustomer.unpaid.subtotal,
+              diskon: updatedCustomer.unpaid.diskon,
+              ppn: updatedCustomer.unpaid.ppn,
+              kodeunik: updatedCustomer.unpaid.kodeunik.toString(),
+              total: updatedCustomer.unpaid.total,
+              biller: "",
+              tglbayar: datePayment,
+              jambayar: timePayment,
+              carabayar: "",
+              namachannel: "",
+              paycode: "",
+              catatan: updatedCustomer.unpaid.catatan,
+              lastupdate: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
+            };
+            updatedCustomer.ispaid = true;
+            updatedCustomer.unpaid = undefined;
           }
 
-          if (!selectedCustomer.payment) {
+          if (!updatedCustomer.payment) {
             const reqPayment: Payment = {
               id: undefined,
-              nolayanan: selectedCustomer?.nolayanan,
-              namapelanggan: selectedCustomer?.namapelanggan,
+              nolayanan: updatedCustomer?.nolayanan,
+              namapelanggan: updatedCustomer?.namapelanggan,
               total: Number(
-                (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.total,
+                (updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.total,
               ),
               invoice: String(
-                (selectedCustomer?.unpaid ?? selectedCustomer?.paid)?.invoice,
+                (updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.invoice,
               ),
               tanggalbayar: datePayment,
               waktubayar: timePayment,
@@ -183,20 +184,21 @@ const PaymentPage: React.FC = () => {
 
             console.log({ resPayment });
 
-            // reqPayment.id = resPayment?.id;
-            // selectedCustomer.payment = reqPayment;
+            reqPayment.id = resPayment?.id;
+            updatedCustomer.payment = reqPayment;
           }
 
-          // const findIndex = uc?.customers.findIndex(
-          //   (item) => item.nolayanan == selectedCustomer.nolayanan,
-          // );
-          // if (findIndex && findIndex != -1 && uc) {
-          //   uc.customers[findIndex] = selectedCustomer;
-          //   uc.setCustomers([...uc.customers]);
-          // }
+          const findIndex = customerContext?.customers.findIndex(
+            (item) => item.nolayanan == updatedCustomer.nolayanan,
+          );
+          if (findIndex != undefined && findIndex != -1 && customerContext) {
+            const updatedCustomers = [...customerContext.customers];
+            updatedCustomers[findIndex] = updatedCustomer;
+            customerContext.setCustomers(updatedCustomers);
+          }
 
-          setLoadingMessage("Sinkronisasi data pelanggan...");
-          await customerContext?.reqAllCustomers(true);
+          setLoadingMessage("Menyelesaikan proses...");
+          // await customerContext?.reqAllCustomers(true);
           setImagePaymentSource(null);
           setSelectedCustomer(null);
 

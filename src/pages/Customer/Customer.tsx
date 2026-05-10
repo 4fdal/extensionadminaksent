@@ -33,10 +33,10 @@ const CustomerPage: React.FC = () => {
 
   useEffect(() => {
     if (isPageLoaded || !customerContext) return;
-    
+
     (async () => {
       setLoading(true);
-      await customerContext.reqAllCustomers(true);
+      await customerContext.reqAllCustomers(false);
       hasPageLoaded(true);
       setLoading(false);
     })();
