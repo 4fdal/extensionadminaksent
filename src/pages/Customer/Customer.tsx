@@ -126,8 +126,9 @@ const CustomerPage: React.FC = () => {
               tabs={[
                 { key: "UNPAID", label: "Unpaid", count: customerContext?.totalUnpaidCustomer ?? 0 },
                 { key: "PAID", label: "Paid", count: customerContext?.totalPaidCustomer ?? 0 },
+                { key: "PAID_NO_SYNC", label: "Paid (No Sync)", count: customerContext?.totalUnpaidNotSyncCustomer ?? 0 },
                 { key: "ISOLIR", label: "Isolir", count: customerContext?.totalIsolirCustomer ?? 0 },
-                { key: "NEW", label: "New", count: customerContext?.countNewCustomer ?? 0 },
+                { key: "NEW", label: "New", count: customerContext?.totalNewCustomer ?? 0 },
                 { key: "ALL", label: "Semua", count: customerContext?.totalCustomer ?? 0 },
               ]}
             />

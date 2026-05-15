@@ -29,8 +29,8 @@ export type ResultUseCustomer = {
   totalCustomer: number;
   totalPaidCustomer: number;
   totalUnpaidCustomer: number;
-  countUnpaidNotSyncCustomer: number;
-  countNewCustomer: number;
+  totalUnpaidNotSyncCustomer: number;
+  totalNewCustomer: number;
   totalIsolirCustomer: number;
   loadingMessage: string;
   setTabFilter: Dispatch<SetStateAction<FilterCustomerStatus>>;
@@ -47,8 +47,8 @@ export const useCustomer = (): ResultUseCustomer => {
   const [customers, setCustomers] = useState<Array<Customer>>([]);
   const [totalCustomer, setTotalCustomer] = useState<number>(0);
   const [totalPaidCustomer, setTotalPaidCustomer] = useState<number>(0);
-  const [countUnpaidNotSyncCustomer, setCountUnpaidNotSyncCustomer] = useState<number>(0);
-  const [countNewCustomer, setCountNewCustomer] = useState<number>(0);
+  const [totalUnpaidNotSyncCustomer, setTotalUnpaidNotSyncCustomer] = useState<number>(0);
+  const [totalNewCustomer, setTotalNewCustomer] = useState<number>(0);
   const [totalUnpaidCustomer, setTotalUnpaidCustomer] = useState<number>(0);
   const [totalIsolirCustomer, setTotalIsolirCustomer] = useState<number>(0);
 
@@ -59,7 +59,7 @@ export const useCustomer = (): ResultUseCustomer => {
   /**
    * Filtered Data Memo
    */
-// ... (omitting memo for brevity in instruction, but keeping it in replacement)
+  // ... (omitting memo for brevity in instruction, but keeping it in replacement)
   const filteredCustomers = useMemo(() => {
     let dataFilter = customers;
 
@@ -70,7 +70,7 @@ export const useCustomer = (): ResultUseCustomer => {
     } else if (tabFilter === "PAID_NO_SYNC") {
       dataFilter = dataFilter.filter((c) => c.ispaid && !c.payment);
     } else if (tabFilter === "NEW") {
-      dataFilter = dataFilter.filter((c) => c.ispaid == null && c.paid == null);
+      dataFilter = dataFilter.filter((c) => c.unpaid == null && c.paid == null);
     } else if (tabFilter === "ISOLIR") {
       dataFilter = dataFilter.filter((c) => !c.aktif);
     }
@@ -110,10 +110,10 @@ export const useCustomer = (): ResultUseCustomer => {
       // 3. Fetch enrichment data (Profile, Unpaid, Paid)
       setLoadingMessage("Enriching customer profiles...");
       const dtProfileCustomer = await getOrFetchPreference("dtProfileCustomer", () => httpGetProfileCustomer({ length }), resync);
-      
+
       setLoadingMessage("Checking unpaid invoices...");
       const dtUnpaidCustomer = await getOrFetchPreference("dtUnpaidCustomer", () => httpGetUnpaidCustomer({ length }), resync);
-      
+
       setLoadingMessage("Retrieving payment history...");
       const dtPaidCustomer = await getOrFetchPreference("dtPaidCustomer", () => httpGetPaidCustomer({ length }), resync);
 
@@ -168,8 +168,8 @@ export const useCustomer = (): ResultUseCustomer => {
         setCustomers(merged);
         setTotalCustomer(countAllData);
         setTotalPaidCustomer(countPaidCustomer);
-        setCountUnpaidNotSyncCustomer(countUnpaidNotSyncCustomer);
-        setCountNewCustomer(countNewCustomer);
+        setTotalUnpaidNotSyncCustomer(countUnpaidNotSyncCustomer);
+        setTotalNewCustomer(countNewCustomer);
         setTotalUnpaidCustomer(countUnpaidCustomer);
         setTotalIsolirCustomer(countIsolirCustomer);
       }
@@ -188,8 +188,8 @@ export const useCustomer = (): ResultUseCustomer => {
       totalCustomer,
       totalPaidCustomer,
       totalUnpaidCustomer,
-      countUnpaidNotSyncCustomer,
-      countNewCustomer,
+      totalUnpaidNotSyncCustomer,
+      totalNewCustomer,
       totalIsolirCustomer,
       loadingMessage,
       setTabFilter,
@@ -203,8 +203,8 @@ export const useCustomer = (): ResultUseCustomer => {
       totalCustomer,
       totalPaidCustomer,
       totalUnpaidCustomer,
-      countUnpaidNotSyncCustomer,
-      countNewCustomer,
+      totalUnpaidNotSyncCustomer,
+      totalNewCustomer,
       totalIsolirCustomer,
       loadingMessage,
       reqAllCustomers,
