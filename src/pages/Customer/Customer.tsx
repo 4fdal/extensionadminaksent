@@ -25,6 +25,7 @@ const CustomerPage: React.FC = () => {
   const [tabFilter, setTabFilter] = useState<Tab | null>(null);
   const { customer: customerContext } = useAppContext();
   const [selectedNolayanan, setSelectedNolayanan] = useState<string[]>([]);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
 
   const handleSelectAll = () => {
     const allNolayanan =
@@ -45,6 +46,23 @@ const CustomerPage: React.FC = () => {
   };
 
   const [modalCustDetail, setModalCustDetail] = useState<Customer | null>(null);
+
+  const handleSort = () => {
+    if (!sortDirection) setSortDirection("asc");
+    else if (sortDirection === "asc") setSortDirection("desc");
+    else setSortDirection(null);
+  };
+
+  const sortedCustomers = React.useMemo(() => {
+    const data = customerContext?.filteredCustomers ?? [];
+    if (!sortDirection) return data;
+    return [...data].sort((a, b) => {
+      const typeA = (a.namasubkategori ?? "").toLowerCase();
+      const typeB = (b.namasubkategori ?? "").toLowerCase();
+      if (sortDirection === "asc") return typeA.localeCompare(typeB);
+      return typeB.localeCompare(typeA);
+    });
+  }, [customerContext?.filteredCustomers, sortDirection]);
 
   useEffect(() => {
     if (isPageLoaded || !customerContext) return;
@@ -137,18 +155,20 @@ const CustomerPage: React.FC = () => {
       <DataList
         loading={loading}
         loadingMessage={customerContext?.loadingMessage}
-        dataNotFound={(customerContext?.filteredCustomers?.length ?? 0) === 0}
-        totalData={customerContext?.filteredCustomers?.length ?? 0}
+        dataNotFound={(sortedCustomers.length) === 0}
+        totalData={sortedCustomers.length}
         selectedCount={selectedNolayanan.length}
         onSelectAll={handleSelectAll}
         isAllSelected={
           selectedNolayanan.length > 0 &&
-          selectedNolayanan.length === (customerContext?.filteredCustomers?.length ?? 0)
+          selectedNolayanan.length === (sortedCustomers.length)
         }
+        onSort={handleSort}
+        sortDirection={sortDirection ?? undefined}
       >
         <DataItemRender
           onClickDetail={(item) => setModalCustDetail(item)}
-          data={customerContext?.filteredCustomers ?? []}
+          data={sortedCustomers}
           tab={tabFilter}
           selectedNolayanan={selectedNolayanan}
           onSelectRow={handleSelectRow}

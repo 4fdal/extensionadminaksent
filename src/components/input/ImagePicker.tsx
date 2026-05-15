@@ -9,6 +9,7 @@ import GlassButton from "./../ui/GlassButton";
 type ImagePickerProp = {
   src?: string | null;
   onChange?: (ev: { path: string }) => void;
+  className?: string;
 };
 
 const ImagePicker: React.FC<ImagePickerProp> = (props) => {
@@ -70,12 +71,11 @@ const ImagePicker: React.FC<ImagePickerProp> = (props) => {
   return (
     <div
       ref={containerRef}
-      className={`w-full relative rounded-2xl flex-1 flex flex-col items-center justify-center transition-all duration-300 overflow-hidden ${
-        imageScr
-          ? "bg-slate-100"
-          : "border-2 border-dashed border-slate-300 bg-white/50 hover:bg-white/80 cursor-pointer"
-      }`}
-      style={{ minHeight: "16rem", touchAction: "none" }}
+      className={`w-full relative rounded-2xl flex-1 flex flex-col items-center justify-center transition-all duration-300 overflow-hidden min-h-[16rem] ${imageScr
+        ? "bg-slate-100"
+        : "border-2 border-dashed border-slate-300 bg-white/50 hover:bg-white/80 cursor-pointer"
+        } ${props.className || ""}`}
+      style={{ touchAction: "none" }}
       onClick={!imageScr ? handleImageUpload : undefined}
     >
       {!imageScr ? (
@@ -95,17 +95,16 @@ const ImagePicker: React.FC<ImagePickerProp> = (props) => {
           <motion.img
             src={imageScr}
             alt="Preview Bukti Pembayaran"
-            drag={scale > 1}
+            drag
+            dragConstraints={containerRef}
             dragElastic={0.2}
             dragMomentum={false}
-            animate={{ scale, x: scale === 1 ? 0 : undefined, y: scale === 1 ? 0 : undefined }}
+            animate={{ scale }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className={`w-full h-full object-cover absolute inset-0 ${
-              scale > 1 ? "cursor-grab active:cursor-grabbing" : "cursor-default"
-            }`}
+            className={`w-full h-auto object-cover cursor-grab active:cursor-grabbing`}
             style={{ originX: 0.5, originY: 0.5 }}
           />
 

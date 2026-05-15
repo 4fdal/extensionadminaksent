@@ -25,6 +25,7 @@ import GlassButton from "../ui/GlassButton";
 import { motion } from "framer-motion";
 
 type DetailCardCustomerProp = {
+  hiddenShowDetailButton?: boolean;
   customer?: Customer;
   onClickDetail?: () => void | undefined;
   isSelected?: boolean;
@@ -55,16 +56,19 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
     return "Deactive";
   }, [customer?.isolirmanual, customer?.aktif]);
 
-  const sendComplaintToWhatsapp = async () => {
+  const sendComplaintShare = async () => {
     if (!props.customer || !complaintText) return;
-    const message = `Halo, saya ingin melaporkan keluhan untuk pelanggan:\nNama: ${props.customer.namapelanggan}\nLayanan: ${props.customer.nolayanan}\nKeluhan: ${complaintText}`;
-    const encodedMessage = encodeURIComponent(message);
     const phone = props.customer.profile?.phone;
     const formattedPhone = phone ? `62${phone.substring(1)}` : "";
-    if (formattedPhone) {
-      await AppLauncher.openUrl({
-        url: `whatsapp://send?phone=${formattedPhone}&text=${encodedMessage}`,
+    const shareText = `${props.customer.namapelanggan}/${complaintText}/${formattedPhone}`;
+
+    try {
+      const { Share } = await import("@capacitor/share");
+      await Share.share({
+        text: shareText,
       });
+    } catch (error) {
+      console.error("Error sharing:", error);
     }
     setShowComplaintModal(false);
     setComplaintText("");
@@ -179,17 +183,17 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
           <GlassButton
             variant="secondary"
             size="sm"
-            className="flex-1 !py-2"
+            className="flex-1 !py-2 shadow-xs "
             onClick={(e) => { e.stopPropagation(); setShowComplaintModal(true); }}
           >
-            <IonIcon icon={warningOutline} className="text-xs" />
-            <span className="text-[10px]">Keluhan</span>
+            <IonIcon icon={warningOutline} className="text-xs text-yellow-600" />
+            <span className="text-[10px] text-yellow-600">Keluhan</span>
           </GlassButton>
 
           <GlassButton
             variant="secondary"
             size="sm"
-            className="flex-1 !py-2"
+            className="flex-1 !py-2 shadow-xs"
             onClick={async (e) => {
               e.stopPropagation();
               await AppLauncher.openUrl({
@@ -197,15 +201,15 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
               });
             }}
           >
-            <IonIcon icon={callOutline} className="text-xs" />
-            <span className="text-[10px]">Chat</span>
+            <IonIcon icon={callOutline} className="text-xs text-green-600" />
+            <span className="text-[10px] text-green-600">Chat</span>
           </GlassButton>
 
           {!props.customer?.ispaid && (
             <GlassButton
               variant="primary"
               size="sm"
-              className="flex-[1.2] !py-2"
+              className="flex-[1.2] !py-2 shadow-xs"
               onClick={(e) => {
                 e.stopPropagation();
                 history.push("/payment?invoice=" + props.customer?.unpaid?.invoice);
@@ -216,17 +220,17 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
             </GlassButton>
           )}
 
-          {props.customer?.paid && (
+          {(props.customer?.paid && !props.hiddenShowDetailButton) && (
             <GlassButton
               variant="secondary"
               size="sm"
-              className="!p-2"
+              className="!p-2 shadow-xs"
               onClick={(e) => {
                 e.stopPropagation();
                 if (props.onClickDetail) props.onClickDetail();
               }}
             >
-              <IonIcon icon={eyeOutline} className="text-base" />
+              <IonIcon icon={eyeOutline} className="text-base text-blue-300" />
             </GlassButton>
           )}
         </div>
@@ -267,9 +271,9 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
             size="lg"
             className="w-full"
             disabled={!complaintText.trim()}
-            onClick={sendComplaintToWhatsapp}
+            onClick={sendComplaintShare}
           >
-            Kirim Laporan ke WhatsApp
+            Kirim Laporan
           </GlassButton>
         </div>
       </IonModal>

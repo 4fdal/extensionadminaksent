@@ -44,6 +44,7 @@ const DataItemRender: React.FC<DataItemRenderProp> = (props) => {
               customer={item}
               isSelected={props.selectedNolayanan?.includes(item.nolayanan)}
               onSelect={() => props.onSelectRow?.(item.nolayanan)}
+              hiddenShowDetailButton={false}
               onClickDetail={() => {
                 if (props.onClickDetail) props.onClickDetail(item);
               }}

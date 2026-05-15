@@ -1,6 +1,6 @@
-import React from "react";
-import { IonIcon } from "@ionic/react";
-import { personOutline, calendarOutline, timeOutline, checkmarkCircle } from "ionicons/icons";
+import React, { useEffect, useState } from "react";
+import { IonIcon, IonLoading } from "@ionic/react";
+import { personOutline, calendarOutline, timeOutline, checkmarkCircle, imageOutline } from "ionicons/icons";
 import { PaymentCustomer } from "@/types/customer";
 import { formatDate } from "@/utils";
 import GlassCard from "../ui/GlassCard";
@@ -11,14 +11,36 @@ type PaymentDetailCustomerProp = {
 };
 
 const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
+
+  const [isLoadedImage, setIsLoadedImage] = useState<boolean>(false)
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+
+    const fetchImage = async () => {
+      if (isLoadedImage && props.data?.gambar) {
+        setIsLoadedImage(false)
+        const res = await fetch(props.data.gambar)
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        setImageSrc(url)
+        setIsLoadedImage(true)
+      }
+    }
+
+    fetchImage()
+
+  }, [imageSrc, props.data?.gambar])
+
   return (
     <GlassCard className="!p-0 overflow-hidden border-slate-200">
       {/* Gambar Bukti Bayar Section */}
       <div className="relative group h-64 sm:h-80 w-full bg-slate-100 flex items-center justify-center overflow-hidden">
-        {props.data?.gambar ? (
+
+        {imageSrc ? (
           <>
             <img
-              src={props.data?.gambar}
+              src={imageSrc}
               alt="Bukti Bayar"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
@@ -26,13 +48,19 @@ const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
           </>
         ) : (
           <div className="flex flex-col items-center gap-2 text-slate-400">
-            <IonIcon icon={personOutline} className="text-4xl" />
-            <span className="text-xs font-bold uppercase tracking-tighter">No Preview Available</span>
+            <IonIcon icon={imageOutline} className="text-4xl" />
+            {isLoadedImage ? (
+              <span className="text-xs font-bold uppercase tracking-tighter">No Preview Available</span>
+            ) : (
+              <span className="text-xs font-bold uppercase tracking-tighter">
+                <IonLoading />
+              </span>
+            )}
           </div>
         )}
-        
+
         <div className="absolute top-4 right-4">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="flex items-center gap-1.5 bg-green-500/20 backdrop-blur-md border border-green-500/30 text-green-400 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase"
@@ -43,7 +71,7 @@ const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-2 space-y-2">
         {/* Header Info */}
         <div className="flex justify-between items-start">
           <div className="space-y-1">
@@ -68,8 +96,8 @@ const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
             <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Tanggal</span>
             <div className="flex items-center gap-2 text-slate-800">
               <IonIcon icon={calendarOutline} className="text-slate-400 text-sm" />
-              <span className="text-sm font-bold">
-                {props.data?.tanggalbayar ? formatDate(new Date(props.data.tanggalbayar), "DD MMM YYYY") : "-"}
+              <span className="text-xs font-bold">
+                {props.data?.tanggalbayar ? formatDate(new Date(props.data.tanggalbayar), "DD/MM/YYYY") : "-"}
               </span>
             </div>
           </div>
@@ -77,7 +105,7 @@ const PaymentDetailCustomer: React.FC<PaymentDetailCustomerProp> = (props) => {
             <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Waktu</span>
             <div className="flex items-center gap-2 text-slate-800">
               <IonIcon icon={timeOutline} className="text-slate-400 text-sm" />
-              <span className="text-sm font-bold font-mono">
+              <span className="text-xs font-bold font-mono">
                 {props.data?.waktubayar ? formatDate(new Date(props.data.waktubayar), "HH:mm:ss") : "-"}
               </span>
             </div>

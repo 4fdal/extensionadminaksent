@@ -1,7 +1,8 @@
 import Tesseract from 'tesseract.js';
 
 /**
- * Extracts time in HH:MM or HH:MM:SS format from an image using Tesseract OCR.
+ * Extracts time in HH:MM:SS or HH:MM format from an image using Tesseract OCR.
+ * Prioritizes HH:MM:SS format, falls back to HH:MM.
  * @param imageSrc The source path or URL of the image.
  * @returns The extracted time string or null if not found.
  */
@@ -14,20 +15,24 @@ export const extractTimeFromImage = async (imageSrc: string): Promise<string | n
     const text = ret.data.text;
     console.log("OCR Detected Text:", text);
     
-    // Match HH:MM:SS or HH:MM formats with optional spaces
-    const timeRegex = /\b(?:[01]?\d|2[0-3])\s*:\s*[0-5]\d(?:\s*:\s*[0-5]\d)?\b/;
-    const match = text.match(timeRegex);
-    
-    if (match && match[0]) {
-      // Clean up spaces
-      let timeString = match[0].replace(/\s/g, '');
-      
-      // If it only found HH:MM, append :00
-      if (timeString.split(':').length === 2) {
-        timeString += ':00';
-      }
-      return timeString;
+    // Try HH:MM:SS first (more specific)
+    const timeWithSecondsRegex = /\b([01]?\d|2[0-3]):([0-5]\d):([0-5]\d)\b/g;
+    const fullMatches = [...text.matchAll(timeWithSecondsRegex)];
+    if (fullMatches.length > 0) {
+      const m = fullMatches[0];
+      const hh = m[1].padStart(2, '0');
+      return `${hh}:${m[2]}:${m[3]}`;
     }
+    
+    // Fallback: try HH:MM (without seconds)
+    const timeWithoutSecondsRegex = /\b([01]?\d|2[0-3]):([0-5]\d)\b/g;
+    const shortMatches = [...text.matchAll(timeWithoutSecondsRegex)];
+    if (shortMatches.length > 0) {
+      const m = shortMatches[0];
+      const hh = m[1].padStart(2, '0');
+      return `${hh}:${m[2]}`;
+    }
+    
     return null;
   } catch (error) {
     console.error("Error during OCR processing:", error);

@@ -13,7 +13,7 @@ import { Customer } from "@/types/customer";
 import SelectCustomer from "@/components/customer/SelectCustomer";
 import DateTimeInput from "@/components/input/DateTimeInput";
 import { extractTimeFromImage } from "@/utils/ocr";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { Capacitor } from "@capacitor/core";
 import {
@@ -79,7 +79,7 @@ const PaymentPage: React.FC = () => {
         } catch (error) { console.error(error); }
       }
     })();
-    setPaymentDate(format(new Date(), "dd/MM/yyyy HH:mm:ss"));
+    setPaymentDate(format(new Date(), "yyyy-MM-dd HH:mm:ss"));
   }, []);
 
   const handlePaymentSubmit = () => {
@@ -196,15 +196,22 @@ const PaymentPage: React.FC = () => {
 
   const handleChangeDateTimeInput = (strDateTime: string) => {
     setPaymentDate(strDateTime);
+    const [inputDate, inputTime] = strDateTime.split(" ");
+    if (!inputDate || !inputTime) { setPaymentExits([]); return; }
+
     const currPaymentExits = paymentList?.filter(item => {
-      const datetimeStr = `${item.tanggalbayar} ${item.waktubayar}`;
-      return strDateTime === datetimeStr;
+      // Compare directly against stored string values
+      const dateMatch = format(parseISO(item.tanggalbayar), "yyyy-MM-dd") === inputDate;
+      const timeMatch = format(parseISO(item.waktubayar), "HH:mm:ss") === inputTime;
+
+      return dateMatch && timeMatch;
     });
+
     if (currPaymentExits) setPaymentExits(currPaymentExits);
   };
 
   const handleClickPaymentExitsItem = (item: Payment) => {
-    const customer = customerContext?.customers.find(c => c.nolayanan === item.nolayanan);
+    const customer = customerContext?.customers.find(c => c.nolayanan == item.nolayanan);
     if (customer) {
       customer.payment = item;
       setModalDataPaymentExits(customer);
@@ -223,16 +230,17 @@ const PaymentPage: React.FC = () => {
         {/* Step 1 & 2 Grid on Desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Step 1: Upload Proof */}
-          <div className="space-y-2 flex flex-col h-full">
-            <div className="flex items-center gap-2 px-1">
+          <div className="space-y-2 flex flex-col h-full mt-2">
+            <div className="flex  items-center gap-2 px-1">
               <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
                 <span className="text-[9px] font-bold text-primary">01</span>
               </div>
-              <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Bukti Pembayaran</h2>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Bukti Pembayaran</span>
             </div>
             <ImagePicker
               src={imagePaymentSource}
               onChange={({ path }) => setImagePaymentSource(path)}
+              className="max-h-[240px] !min-h-0"
             />
           </div>
 
@@ -242,7 +250,7 @@ const PaymentPage: React.FC = () => {
               <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
                 <span className="text-[9px] font-bold text-primary">02</span>
               </div>
-              <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Informasi Transaksi</h2>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Informasi Transaksi</span>
             </div>
             <GlassCard className="space-y-3 !p-4">
               <div className="space-y-1.5">
@@ -294,7 +302,7 @@ const PaymentPage: React.FC = () => {
             <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center border border-primary/30">
               <span className="text-[9px] font-bold text-primary">03</span>
             </div>
-            <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Ringkasan & Konfirmasi</h2>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Ringkasan & Konfirmasi</span>
           </div>
 
           <PaymentSummaryCard customer={selectedCustomer} />
