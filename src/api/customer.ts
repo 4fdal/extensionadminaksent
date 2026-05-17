@@ -113,6 +113,8 @@ const getHeaders = (cookie: string, contentType?: string) => {
  */
 export const httpGetHomeCustomer = async (): Promise<HomeCustomer | null> => {
   try {
+
+
     const cookie = await getCookieTungkaLilirAdmin();
     if (!cookie) return null;
 

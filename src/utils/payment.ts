@@ -3,7 +3,7 @@ import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 import { getCookieTungkaLilirAdmin } from "./cookie";
 import { AppLauncher } from "@capacitor/app-launcher";
-import { getApiConfig, ACCOUNT_CONFIG } from "@/config";
+import { getApiConfig, getDBAuthenticationToken, ACCOUNT_CONFIG } from "@/config";
 
 export const KEY_PAYMENT_PREFERENCE = "PAYMENT_HISTORY";
 
@@ -229,7 +229,7 @@ export class HttpPaymentApi {
     try {
       const API_CONFIG = await getApiConfig();
       const res = await CapacitorHttp.get({
-        url: `${API_CONFIG.DB_EXTENSION_API_URL}?table=payment`,
+        url: `${API_CONFIG.DB_EXTENSION_API_URL ?? ''}?authorization=${await getDBAuthenticationToken()}&table=payments`,
         responseType: "json",
       });
 
@@ -255,7 +255,7 @@ export class HttpPaymentApi {
     try {
       const API_CONFIG = await getApiConfig();
       const res = await CapacitorHttp.post({
-        url: API_CONFIG.DB_EXTENSION_API_URL,
+        url: `${API_CONFIG.DB_EXTENSION_API_URL ?? ''}?authorization=${await getDBAuthenticationToken()}`,
         data: {
           action: "read",
           table: "payment",
@@ -288,7 +288,7 @@ export class HttpPaymentApi {
         headers: {
           "Content-Type": "application/json",
         },
-        url: API_CONFIG.DB_EXTENSION_API_URL,
+        url: `${API_CONFIG.DB_EXTENSION_API_URL ?? ''}?authorization=${await getDBAuthenticationToken()}`,
         data: {
           action: "create",
           table: "payment",
@@ -330,7 +330,7 @@ export class HttpPaymentApi {
         headers: {
           "Content-Type": "application/json",
         },
-        url: API_CONFIG.DB_EXTENSION_API_URL,
+        url: `${API_CONFIG.DB_EXTENSION_API_URL ?? ''}?authorization=${await getDBAuthenticationToken()}`,
         data: {
           action: "update",
           table: "payment",
@@ -371,7 +371,7 @@ export class HttpPaymentApi {
         headers: {
           "Content-Type": "application/json",
         },
-        url: API_CONFIG.DB_EXTENSION_API_URL,
+        url: `${API_CONFIG.DB_EXTENSION_API_URL ?? ''}?authorization=${await getDBAuthenticationToken()}`,
         data: {
           action: "read",
           table: "payment",

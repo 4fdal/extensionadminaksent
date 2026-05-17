@@ -86,7 +86,7 @@ export const handleHttpError = (
 static async getAll(): Promise<Array<Payment>> {
   try {
     const res = await CapacitorHttp.get({
-      url: `${this.baseURL}?table=payment`,
+      url: `${this.baseURL}?table=payments`,
       responseType: "json",
     });
 
@@ -110,7 +110,7 @@ static async getAll(): Promise<Array<Payment>> {
 static async getAll(): Promise<Array<Payment>> {
   try {
     const res = await CapacitorHttp.get({
-      url: `${this.baseURL}?table=payment`,
+      url: `${this.baseURL}?table=payments`,
       responseType: "json",
     });
 

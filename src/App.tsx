@@ -39,12 +39,27 @@ import { useCustomer } from "./hooks/useCustomer";
 import { AppContext } from "./context/app-context";
 import { useShareTarget } from "./hooks/useShareTarget";
 import SettingsPage from "./pages/Settings/Settings";
+import { getApiConfig } from "./config";
 
 setupIonicReact();
 
 const App: React.FC = () => {
   const customer = useCustomer();
   const imageShare = useShareTarget();
+  const [isReady, setIsReady] = React.useState(false);
+
+  React.useEffect(() => {
+    getApiConfig().then((config) => {
+      if (!config.BASE_URL || !config.DB_EXTENSION_API_URL) {
+        if (window.location.pathname !== "/settings") {
+          window.location.href = "/settings";
+        }
+      }
+      setIsReady(true);
+    });
+  }, []);
+
+  if (!isReady) return null;
 
   return (
     <AppContext.Provider value={{ customer, imageShare }}>

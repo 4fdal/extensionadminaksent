@@ -80,46 +80,41 @@ export const isExpiredCookie = async (
 let singleFlightPromise: Promise<string | null> | null = null;
 
 export const getCookieTungkaLilirAdmin = async (): Promise<string | null> => {
-  if (singleFlightPromise) {
-    return singleFlightPromise;
-  }
+  try {
+    const PREF_KEY_COOKIE = "COOKIE";
+    const prefCookie = await Preferences.get({ key: PREF_KEY_COOKIE });
 
-  singleFlightPromise = (async () => {
-    try {
-      const PREF_KEY_COOKIE = "COOKIE";
-      const prefCookie = await Preferences.get({ key: PREF_KEY_COOKIE });
+    const API_CONFIG = await getApiConfig();
 
-      const API_CONFIG = await getApiConfig();
+    const openUrl = `${API_CONFIG.BASE_URL}/adminrad`;
+    const closeWithUrl = `${API_CONFIG.BASE_URL}/home`;
 
-      const openUrl = `${API_CONFIG.BASE_URL}/adminrad`;
-      const closeWithUrl = `${API_CONFIG.BASE_URL}/home`;
+    const isExpired = await isExpiredCookie(closeWithUrl, prefCookie?.value);
 
-      const isExpired = await isExpiredCookie(closeWithUrl, prefCookie?.value);
+    const needsRefresh = prefCookie.value == null || prefCookie.value == "" || isExpired;
 
-      console.log({ isExpired, prefCookie });
-      const needsRefresh = prefCookie.value == null || prefCookie.value == "" || isExpired;
-      if (needsRefresh) {
-        console.log("[getCookie] Cookie is missing or expired. Starting refresh...");
-        const newCookie = await handleOpenBrowserLoginGetCookie({
-          openUrl,
-          closeWithUrl,
-        });
+    if (needsRefresh) {
+      console.log("[getCookie] Cookie is missing or expired. Starting refresh...", {
+        openUrl,
+        closeWithUrl,
+      });
+      const newCookie = await handleOpenBrowserLoginGetCookie({
+        openUrl,
+        closeWithUrl,
+      });
 
-        if (newCookie) {
-          await Preferences.set({ key: PREF_KEY_COOKIE, value: newCookie });
-          console.log("[getCookie] New cookie saved successfully.");
-        }
-        return newCookie;
+      if (newCookie) {
+        await Preferences.set({ key: PREF_KEY_COOKIE, value: newCookie });
+        console.log("[getCookie] New cookie saved successfully.");
       }
-
-      return prefCookie.value || null;
-    } catch (error) {
-      console.error("[getCookie] Error in single-flight execution:", error);
-      return null;
-    } finally {
-      singleFlightPromise = null;
+      return newCookie;
     }
-  })();
 
-  return singleFlightPromise;
+    return prefCookie.value || null;
+  } catch (error) {
+    console.error("[getCookie] Error in single-flight execution:", error);
+    return null;
+  } finally {
+    singleFlightPromise = null;
+  }
 };

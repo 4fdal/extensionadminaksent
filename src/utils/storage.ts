@@ -1,3 +1,6 @@
+import { getApiConfig, getDBAuthenticationToken } from "@/config";
+import { FileBase64, UploadResponse } from "@/types/storage";
+import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 
 /**
@@ -28,12 +31,43 @@ export const getOrFetchPreference = async <T>(
 
   // Fetch fresh data
   const data = await fetchFn();
-  
+
   // Update cache
-  await Preferences.set({ 
-    key, 
-    value: JSON.stringify(data) 
+  await Preferences.set({
+    key,
+    value: JSON.stringify(data)
   });
-  
+
   return data;
 };
+
+
+
+
+export async function uploadFile(file: FileBase64): Promise<UploadResponse> {
+  try {
+    const API_CONFIG = await getApiConfig();
+    const res = await CapacitorHttp.post({
+      url: `${API_CONFIG.DB_EXTENSION_API_URL ?? ''}?authorization=${await getDBAuthenticationToken()}`,
+      data: file,
+      responseType: "json",
+    });
+
+    if (res.status != 200)
+      return Promise.reject(
+        new Error("Response not status 200 : " + JSON.stringify(res)),
+      );
+
+    const contentType =
+      res.headers["Content-Type"] || res.headers["content-type"] || "";
+    if (contentType.toLowerCase().indexOf("application/json") == -1)
+      return Promise.reject({ res });
+
+
+    return Promise.resolve(res.data);
+  } catch (err) {
+    return Promise.reject({
+      err,
+    });
+  }
+}
