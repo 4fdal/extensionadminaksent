@@ -10,7 +10,7 @@ export * from "./helpers";
 export * from "./cookie";
 
 // Payment Utilities
-export * from "./payment";
+export * from "../api/payment";
 
 // HTTP & API handling
 export * from "./http";

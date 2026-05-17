@@ -1,7 +1,7 @@
 import React from "react";
 import { IonIcon, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonImg } from "@ionic/react";
 import { warningOutline, eyeOutline, closeCircleOutline } from "ionicons/icons";
-import { Payment } from "@/utils/payment";
+import { Payment } from "@/api/payment";
 import { Customer } from "@/types/customer";
 import DetailCardCustomer from "@/components/customer/DetailCardCustomer";
 import GlassButton from "@/components/ui/GlassButton";

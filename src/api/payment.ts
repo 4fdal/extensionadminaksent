@@ -1,9 +1,10 @@
 import { Customer, PaymentCustomer } from "@/types/customer";
 import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
-import { getCookieTungkaLilirAdmin } from "./cookie";
+import { getCookieTungkaLilirAdmin } from "../utils/cookie";
 import { AppLauncher } from "@capacitor/app-launcher";
 import { getApiConfig, getDBAuthenticationToken, ACCOUNT_CONFIG } from "@/config";
+import { parse } from "date-fns";
 
 export const KEY_PAYMENT_PREFERENCE = "PAYMENT_HISTORY";
 
@@ -238,11 +239,21 @@ export class HttpPaymentApi {
           new Error("Response not status 200 : " + JSON.stringify(res)),
         );
 
+
       const contentType =
         res.headers["Content-Type"] || res.headers["content-type"] || "";
       if (contentType.toLowerCase().indexOf("application/json") == -1)
         return Promise.reject({ res });
 
+      res.data = res.data.filter((payment: Payment) => {
+        let valid = true;
+        if (payment) {
+          const currentDate = new Date()
+          const paymentDate = parse(payment.tanggalbayar, "yyyy-MM-dd", new Date())
+          valid = valid && currentDate.getMonth() == paymentDate.getMonth()
+        }
+        return valid;
+      })
 
       return Promise.resolve(res.data);
     } catch (err) {

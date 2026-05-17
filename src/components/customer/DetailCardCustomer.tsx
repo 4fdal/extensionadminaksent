@@ -21,7 +21,7 @@ import React, { useMemo, useState } from "react";
 import { differenceInDays } from "date-fns";
 import { useHistory } from "react-router";
 import { AppLauncher } from "@capacitor/app-launcher";
-import { sendBilToWhatsapp } from "@/utils/payment";
+import { sendBilToWhatsapp } from "@/api/payment";
 import GlassCard from "../ui/GlassCard";
 import GlassButton from "../ui/GlassButton";
 import { motion } from "framer-motion";

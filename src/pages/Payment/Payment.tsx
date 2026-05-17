@@ -20,9 +20,10 @@ import {
   HttpPaymentApi,
   HttpPaymentRlradius,
   Payment,
-} from "@/utils/payment";
+} from "@/api/payment";
 import { useHistory, useLocation } from "react-router";
 import PaymentSummaryCard from "@/components/payment/PaymentSummaryCard";
+import { uploadFile } from "@/api/storage";
 import PaymentConfirmationModal from "@/components/payment/PaymentConfirmationModal";
 import PaymentExistsWarning from "@/components/payment/PaymentExistsWarning";
 import GlassCard from "@/components/ui/GlassCard";
@@ -170,6 +171,34 @@ const PaymentPage: React.FC = () => {
           updatedCustomer.unpaid = undefined;
         }
 
+        let finalImageUrl = imagePaymentSource;
+
+        if (imagePaymentSource && !imagePaymentSource.startsWith("http")) {
+          setLoadingMessage("Mengupload bukti pembayaran...");
+          const response = await fetch(imagePaymentSource);
+          const blob = await response.blob();
+
+          const base64data = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+
+          const base64 = base64data.split(",")[1];
+          const mimeType = blob.type || "image/jpeg";
+          const fileName = `payment_${Date.now()}.${mimeType.split("/")[1] || "jpg"}`;
+
+          const uploadRes = await uploadFile({ fileName, mimeType, base64 });
+          if (uploadRes && uploadRes.data && uploadRes.data.url) {
+            finalImageUrl = uploadRes.data.url;
+          } else {
+            throw new Error("Gagal mengupload gambar, respon tidak valid.");
+          }
+        }
+
+        setLoadingMessage("Menyimpan pembayaran...");
+
         const reqPayment: Payment = {
           id: undefined,
           nolayanan: updatedCustomer?.nolayanan,
@@ -178,7 +207,7 @@ const PaymentPage: React.FC = () => {
           invoice: String((updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.invoice),
           tanggalbayar: datePayment,
           waktubayar: timePayment,
-          gambar: imagePaymentSource,
+          gambar: finalImageUrl,
           created_at: undefined,
           updated_at: undefined,
         };

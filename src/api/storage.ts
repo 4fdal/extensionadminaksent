@@ -18,6 +18,7 @@ export const getOrFetchPreference = async <T>(
   fetchFn: () => Promise<T>,
   resync: boolean = false
 ): Promise<T> => {
+
   if (!resync) {
     const pref = await Preferences.get({ key });
     if (pref.value) {

@@ -15,8 +15,8 @@ import {
   httpGetUnpaidCustomer,
 } from "@/api/customer";
 import { dateTimeConvertToString } from "@/utils/helpers";
-import { HttpPaymentApi } from "@/utils/payment";
-import { getOrFetchPreference } from "@/utils/storage";
+import { HttpPaymentApi } from "@/api/payment";
+import { getOrFetchPreference } from "@/api/storage";
 import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
 import { parse } from "date-fns";
 
@@ -66,13 +66,7 @@ export const useCustomer = (): ResultUseCustomer => {
       dataFilter = dataFilter.filter((c) => c.ispaid);
     } else if (tabFilter === "PAID_NO_SYNC") {
       dataFilter = dataFilter.filter((c) => {
-        let valid = true
-        if (c.payment) {
-          const currentDate = new Date()
-          const paymentDate = parse(c.payment.tanggalbayar, "yyyy-MM-dd", new Date())
-          valid = currentDate.getMonth() == paymentDate.getMonth()
-        }
-        return c.ispaid && !c.payment && true
+        return c.paid != null && c.payment == null
       });
     } else if (tabFilter === "NEW") {
       dataFilter = dataFilter.filter((c) => c.unpaid == null && c.paid == null);
@@ -89,7 +83,6 @@ export const useCustomer = (): ResultUseCustomer => {
           customer.unpaid?.invoice.toLowerCase().includes(searchLower),
       );
     }
-
     return dataFilter;
   }, [customers, tabFilter, searchFilter]);
 
@@ -146,10 +139,12 @@ export const useCustomer = (): ResultUseCustomer => {
             cusItem.payment = paymentMap.get(cusItem.nolayanan);
 
             countAllData += 1;
-            if (cusItem.ispaid) countPaidCustomer += 1;
-            else countUnpaidCustomer += 1;
 
-            if (cusItem.ispaid && !cusItem.payment) countUnpaidNotSyncCustomer += 1;
+            if (cusItem.paid) countPaidCustomer += 1;
+            if (cusItem.unpaid) countUnpaidCustomer += 1;
+
+            if (cusItem.paid != null && cusItem.payment == null) countUnpaidNotSyncCustomer += 1;
+
             if (cusItem.unpaid == null && cusItem.paid == null) countNewCustomer += 1;
             if (!cusItem.aktif) countIsolirCustomer += 1;
 
@@ -179,8 +174,8 @@ export const useCustomer = (): ResultUseCustomer => {
         setTotalIsolirCustomer(countIsolirCustomer);
       }
       setLoadingMessage("");
-    } catch (error) {
-      console.error("[Error] reqAllCustomers: ", error);
+    } catch (error: any) {
+      console.error("[Error] reqAllCustomers: ", error?.message, error);
       setLoadingMessage("Error occurred during load");
     }
   }, []);
