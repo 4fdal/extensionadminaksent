@@ -14,6 +14,8 @@ import {
   checkmarkOutline,
   closeCircleOutline,
   warningOutline,
+  pencilOutline,
+  syncCircle,
 } from "ionicons/icons";
 import React, { useMemo, useState } from "react";
 import { differenceInDays } from "date-fns";
@@ -124,6 +126,26 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
                 </motion.span>
               )
             )}
+
+            {props.customer?.ispaid && (
+              <GlassButton
+                variant="primary"
+                size="sm"
+                className="flex-[1.2] !py-2 shadow-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  history.push("/payment?invoice=" + props.customer?.paid?.invoice);
+                }}
+              >
+                {props.customer?.payment ? <>
+                  <IonIcon icon={pencilOutline} className="text-xs" />
+                  {/* <span className="text-[10px]">Edit</span> */}
+                </> : <>
+                  <IonIcon icon={syncCircle} className="text-xs" />
+                  {/* <span className="text-[10px]">Sync</span> */}
+                </>}
+              </GlassButton>
+            )}
           </div>
         </div>
 
@@ -219,6 +241,8 @@ const DetailCardCustomer: React.FC<DetailCardCustomerProp> = (props) => {
               <span className="text-[10px]">Bayar</span>
             </GlassButton>
           )}
+
+
 
           {(props.customer?.paid && !props.hiddenShowDetailButton) && (
             <GlassButton

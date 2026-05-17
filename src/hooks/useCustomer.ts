@@ -18,6 +18,7 @@ import { dateTimeConvertToString } from "@/utils/helpers";
 import { HttpPaymentApi } from "@/utils/payment";
 import { getOrFetchPreference } from "@/utils/storage";
 import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
+import { parse } from "date-fns";
 
 /**
  * Result Interface for Hook
@@ -56,10 +57,6 @@ export const useCustomer = (): ResultUseCustomer => {
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [loadingMessage, setLoadingMessage] = useState<string>("");
 
-  /**
-   * Filtered Data Memo
-   */
-  // ... (omitting memo for brevity in instruction, but keeping it in replacement)
   const filteredCustomers = useMemo(() => {
     let dataFilter = customers;
 
@@ -68,7 +65,15 @@ export const useCustomer = (): ResultUseCustomer => {
     } else if (tabFilter === "PAID") {
       dataFilter = dataFilter.filter((c) => c.ispaid);
     } else if (tabFilter === "PAID_NO_SYNC") {
-      dataFilter = dataFilter.filter((c) => c.ispaid && !c.payment);
+      dataFilter = dataFilter.filter((c) => {
+        let valid = true
+        if (c.payment) {
+          const currentDate = new Date()
+          const paymentDate = parse(c.payment.tanggalbayar, "yyyy-MM-dd", new Date())
+          valid = currentDate.getMonth() == paymentDate.getMonth()
+        }
+        return c.ispaid && !c.payment && true
+      });
     } else if (tabFilter === "NEW") {
       dataFilter = dataFilter.filter((c) => c.unpaid == null && c.paid == null);
     } else if (tabFilter === "ISOLIR") {

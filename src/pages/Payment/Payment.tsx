@@ -13,7 +13,7 @@ import { Customer } from "@/types/customer";
 import SelectCustomer from "@/components/customer/SelectCustomer";
 import DateTimeInput from "@/components/input/DateTimeInput";
 import { extractTimeFromImage } from "@/utils/ocr";
-import { format, parseISO } from "date-fns";
+import { format, parse, parseISO } from "date-fns";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { Capacitor } from "@capacitor/core";
 import {
@@ -21,7 +21,7 @@ import {
   HttpPaymentRlradius,
   Payment,
 } from "@/utils/payment";
-import { useHistory } from "react-router";
+import { useHistory, useLocation } from "react-router";
 import PaymentSummaryCard from "@/components/payment/PaymentSummaryCard";
 import PaymentConfirmationModal from "@/components/payment/PaymentConfirmationModal";
 import PaymentExistsWarning from "@/components/payment/PaymentExistsWarning";
@@ -32,6 +32,7 @@ import { motion } from "framer-motion";
 const PaymentPage: React.FC = () => {
   const [present] = useIonToast();
   const history = useHistory();
+  const location = useLocation();
   const { customer: customerContext, imageShare } = useAppContext();
 
   const [paymentList, setPaymentList] = useState<Array<Payment> | null>(null);
@@ -56,16 +57,29 @@ const PaymentPage: React.FC = () => {
   }, [imageShare]);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
+    const searchParams = new URLSearchParams(location.search);
     const invoice = searchParams.get("invoice");
 
     if ((customerContext?.customers?.length ?? 0) > 0 && invoice) {
       const selected = customerContext?.customers.find(
         (customer) => (customer.unpaid ?? customer.paid)?.invoice == invoice,
       );
-      if (selected) setSelectedCustomer(selected);
+      if (selected) {
+        setSelectedCustomer(selected);
+
+        if (selected?.payment) {
+          const rawTanggal = selected?.payment?.tanggalbayar || "";
+          const rawWaktu = selected?.payment?.waktubayar || "";
+
+          const tanggalBayar = rawTanggal.includes("T") ? format(new Date(rawTanggal), "yyyy-MM-dd") : rawTanggal;
+          const waktuBayar = rawWaktu.includes("T") ? format(new Date(rawWaktu), "HH:mm:ss") : rawWaktu;
+
+          setPaymentDate(`${tanggalBayar} ${waktuBayar}`)
+          setImagePaymentSource(selected?.payment?.gambar)
+        }
+      }
     }
-  }, [window.location, customerContext?.customers]);
+  }, [location.search, customerContext?.customers]);
 
   useEffect(() => {
     (async () => {
@@ -156,23 +170,30 @@ const PaymentPage: React.FC = () => {
           updatedCustomer.unpaid = undefined;
         }
 
-        if (!updatedCustomer.payment) {
-          const reqPayment: Payment = {
-            id: undefined,
-            nolayanan: updatedCustomer?.nolayanan,
-            namapelanggan: updatedCustomer?.namapelanggan,
-            total: Number((updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.total),
-            invoice: String((updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.invoice),
-            tanggalbayar: datePayment,
-            waktubayar: timePayment,
-            gambar: imagePaymentSource,
-            created_at: undefined,
-            updated_at: undefined,
-          };
-          const resPayment = await HttpPaymentApi.create(reqPayment);
+        const reqPayment: Payment = {
+          id: undefined,
+          nolayanan: updatedCustomer?.nolayanan,
+          namapelanggan: updatedCustomer?.namapelanggan,
+          total: Number((updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.total),
+          invoice: String((updatedCustomer?.unpaid ?? updatedCustomer?.paid)?.invoice),
+          tanggalbayar: datePayment,
+          waktubayar: timePayment,
+          gambar: imagePaymentSource,
+          created_at: undefined,
+          updated_at: undefined,
+        };
+
+        let resPayment = null
+
+        if (!selectedCustomer.payment) {
+          resPayment = await HttpPaymentApi.create(reqPayment);
           reqPayment.id = resPayment?.id;
-          updatedCustomer.payment = reqPayment;
+        } else if (selectedCustomer.payment && selectedCustomer?.ispaid) {
+          reqPayment.id = selectedCustomer.payment.id;
+          resPayment = await HttpPaymentApi.update(reqPayment);
         }
+
+        updatedCustomer.payment = reqPayment;
 
         const findIndex = customerContext?.customers.findIndex(item => item.nolayanan == updatedCustomer.nolayanan);
         if (findIndex !== undefined && findIndex !== -1 && customerContext) {
