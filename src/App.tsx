@@ -38,6 +38,7 @@ import React from "react";
 import { useCustomer } from "./hooks/useCustomer";
 import { AppContext } from "./context/app-context";
 import { useShareTarget } from "./hooks/useShareTarget";
+import SettingsPage from "./pages/Settings/Settings";
 
 setupIonicReact();
 
@@ -55,6 +56,9 @@ const App: React.FC = () => {
             </Route>
             <Route exact path="/payment">
               <PaymentPage />
+            </Route>
+            <Route exact path="/settings">
+              <SettingsPage />
             </Route>
             <Route exact path="/">
               <Redirect to="/customer" />

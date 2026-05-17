@@ -11,14 +11,16 @@ import { Customer } from "@/types/customer";
 import {
   IonActionSheet,
 } from "@ionic/react";
-import { ellipsisVertical, refreshCircle, people, card, alertCircle, hourglass } from "ionicons/icons";
+import { ellipsisVertical, refreshCircle, people, card, alertCircle, hourglass, syncOutline, settingsOutline } from "ionicons/icons";
 import React, { useEffect, useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import GlassButton from "@/components/ui/GlassButton";
 import { IonIcon } from "@ionic/react";
 import { motion } from "framer-motion";
+import { useHistory } from "react-router";
 
 const CustomerPage: React.FC = () => {
+  const history = useHistory();
   const [isPageLoaded, hasPageLoaded] = useState<boolean>(false);
   const [showActionSheet, setShowActionSheet] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -146,7 +148,8 @@ const CustomerPage: React.FC = () => {
             isOpen={showActionSheet}
             onDidDismiss={() => setShowActionSheet(false)}
             buttons={[
-              { text: "Synchronize", icon: refreshCircle, handler: handleSyncCustomer },
+              { text: "Synchronize", icon: syncOutline, handler: handleSyncCustomer },
+              { text: "Settings", icon: settingsOutline, handler: () => { setShowActionSheet(false); history.push('/settings'); } },
               { text: "Batal", role: "cancel" },
             ]}
           />
