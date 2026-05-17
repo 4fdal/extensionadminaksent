@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { useIonToast } from "@ionic/react";
 import { Preferences } from "@capacitor/preferences";
-import { API_CONFIG } from "@/config";
+import { API_CONFIG, getApiConfig } from "@/config";
 import { IonIcon } from "@ionic/react";
 import { saveOutline, reloadOutline } from "ionicons/icons";
 import GlassButton from "@/components/ui/GlassButton";
@@ -15,10 +15,9 @@ const SettingsPage: React.FC = () => {
 
   useEffect(() => {
     const loadPrefs = async () => {
-      const baseUrlPref = await Preferences.get({ key: "SETTINGS_BASE_URL" });
-      const dbUrlPref = await Preferences.get({ key: "SETTINGS_DB_EXTENSION_API_URL" });
-      setBaseUrl(baseUrlPref.value || API_CONFIG.BASE_URL);
-      setDbUrl(dbUrlPref.value || API_CONFIG.PAYMENT_API_URL);
+      const config = await getApiConfig();
+      setBaseUrl(config.BASE_URL);
+      setDbUrl(config.DB_EXTENSION_API_URL);
     };
     loadPrefs();
   }, []);

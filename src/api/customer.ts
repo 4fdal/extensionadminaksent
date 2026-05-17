@@ -7,7 +7,7 @@ import {
   RequestCustomerParams,
   UnpaidCustomerItem,
 } from "@/types/customer";
-import { API_CONFIG, LIST_CONFIG } from "@/config";
+import { getApiConfig, LIST_CONFIG } from "@/config";
 import { getCookieTungkaLilirAdmin } from "@/utils/cookie";
 import { validateHttpResponse } from "@/utils/http";
 import { buildDataTableParams, DataTableColumn } from "@/utils/validators";
@@ -116,6 +116,7 @@ export const httpGetHomeCustomer = async (): Promise<HomeCustomer | null> => {
     const cookie = await getCookieTungkaLilirAdmin();
     if (!cookie) return null;
 
+    const API_CONFIG = await getApiConfig();
     const response = await CapacitorHttp.get({
       url: `${API_CONFIG.BASE_URL}/home/data`,
       headers: getHeaders(cookie),
@@ -143,6 +144,7 @@ export const httpGetProfileCustomer = async (
       order: [{ column: 1, dir: "desc" }],
     });
 
+    const API_CONFIG = await getApiConfig();
     const response = await CapacitorHttp.post({
       url: `${API_CONFIG.BASE_URL}/pelanggan/data`,
       headers: getHeaders(cookie, "application/x-www-form-urlencoded; charset=UTF-8"),
@@ -172,6 +174,7 @@ export const httpGetUnpaidCustomer = async (
     });
     data.append("status", "1");
 
+    const API_CONFIG = await getApiConfig();
     const response = await CapacitorHttp.post({
       url: `${API_CONFIG.BASE_URL}/invoice/unpaid/data`,
       headers: getHeaders(cookie, "application/x-www-form-urlencoded; charset=UTF-8"),
@@ -203,6 +206,7 @@ export const httpGetPaidCustomer = async (
     data.append("bulan", String(new Date().getMonth() + 1).padStart(2, "0"));
     data.append("tahun", String(new Date().getFullYear()));
 
+    const API_CONFIG = await getApiConfig();
     const response = await CapacitorHttp.post({
       url: `${API_CONFIG.BASE_URL}/invoice/paid/data`,
       headers: getHeaders(cookie, "application/x-www-form-urlencoded; charset=UTF-8"),
@@ -236,6 +240,7 @@ export const httpGetCustomer = async (
     data.append("status", "0");
     data.append("mitra", "");
 
+    const API_CONFIG = await getApiConfig();
     const response = await CapacitorHttp.post({
       url: `${API_CONFIG.BASE_URL}/berlangganan/data`,
       headers: getHeaders(cookie, "application/x-www-form-urlencoded; charset=UTF-8"),

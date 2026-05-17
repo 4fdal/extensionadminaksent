@@ -8,7 +8,7 @@
  */
 export const API_CONFIG = {
   BASE_URL: "https://tungkalilir.rlradius.app",
-  PAYMENT_API_URL:
+  DB_EXTENSION_API_URL:
     "https://script.google.com/macros/s/AKfycbyHqUZHwWPsJQCH28KLezVMN3S_E5KpPhDuZEhnNkUT3vKKeAhjHxt80mpO40zosvHouw/exec",
   TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,

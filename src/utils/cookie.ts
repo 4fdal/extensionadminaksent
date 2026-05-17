@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { getApiConfig } from "@/config";
 import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 
@@ -88,8 +89,10 @@ export const getCookieTungkaLilirAdmin = async (): Promise<string | null> => {
       const PREF_KEY_COOKIE = "COOKIE";
       const prefCookie = await Preferences.get({ key: PREF_KEY_COOKIE });
 
-      const openUrl = "https://tungkalilir.rlradius.app/adminrad";
-      const closeWithUrl = "https://tungkalilir.rlradius.app/home";
+      const API_CONFIG = await getApiConfig();
+
+      const openUrl = `${API_CONFIG.BASE_URL}/adminrad`;
+      const closeWithUrl = `${API_CONFIG.BASE_URL}/home`;
 
       const isExpired = await isExpiredCookie(closeWithUrl, prefCookie?.value);
 

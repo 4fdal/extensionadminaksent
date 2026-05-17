@@ -3,7 +3,7 @@ import { CapacitorHttp } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
 import { getCookieTungkaLilirAdmin } from "./cookie";
 import { AppLauncher } from "@capacitor/app-launcher";
-import { API_CONFIG, ACCOUNT_CONFIG } from "@/config";
+import { getApiConfig, ACCOUNT_CONFIG } from "@/config";
 
 export const KEY_PAYMENT_PREFERENCE = "PAYMENT_HISTORY";
 
@@ -137,7 +137,6 @@ export class PaymentList {
 }
 
 export class HttpPaymentRlradius {
-  static baseURL = API_CONFIG.BASE_URL;
 
   static async getCSRF(): Promise<{ status: boolean; token: string } | null> {
     try {
@@ -147,8 +146,9 @@ export class HttpPaymentRlradius {
           new Error("HttpPaymentRlradius.getCSRF : Cookie not found"),
         );
 
+      const API_CONFIG = await getApiConfig();
       const res = await CapacitorHttp.get({
-        url: `${this.baseURL}/csrf`,
+        url: `${API_CONFIG.BASE_URL}/csrf`,
         headers: {
           "X-Requested-With": "XMLHttpRequest",
           Cookie: cookie,
@@ -196,8 +196,9 @@ export class HttpPaymentRlradius {
         rekening: ACCOUNT_CONFIG.ACCOUNT_NUMBER,
       }).toString();
 
+      const API_CONFIG = await getApiConfig();
       const res = await CapacitorHttp.post({
-        url: `${this.baseURL}/invoice/setlunas`,
+        url: `${API_CONFIG.BASE_URL}/invoice/setlunas`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           "X-Requested-With": "XMLHttpRequest",
@@ -223,12 +224,12 @@ export class HttpPaymentRlradius {
 }
 
 export class HttpPaymentApi {
-  static baseURL: string = API_CONFIG.PAYMENT_API_URL;
 
   static async getAll(): Promise<Array<Payment>> {
     try {
+      const API_CONFIG = await getApiConfig();
       const res = await CapacitorHttp.get({
-        url: `${this.baseURL}?table=payment`,
+        url: `${API_CONFIG.DB_EXTENSION_API_URL}?table=payment`,
         responseType: "json",
       });
 
@@ -252,8 +253,9 @@ export class HttpPaymentApi {
   }
   static async read(id: string): Promise<Payment | null> {
     try {
+      const API_CONFIG = await getApiConfig();
       const res = await CapacitorHttp.post({
-        url: this.baseURL,
+        url: API_CONFIG.DB_EXTENSION_API_URL,
         data: {
           action: "read",
           table: "payment",
@@ -281,11 +283,12 @@ export class HttpPaymentApi {
   }
   static async create(payment: Payment): Promise<Payment | null> {
     try {
+      const API_CONFIG = await getApiConfig();
       const res = await CapacitorHttp.post({
         headers: {
           "Content-Type": "application/json",
         },
-        url: this.baseURL,
+        url: API_CONFIG.DB_EXTENSION_API_URL,
         data: {
           action: "create",
           table: "payment",
@@ -322,11 +325,12 @@ export class HttpPaymentApi {
   }
   static async update(payment: Payment): Promise<Payment | null> {
     try {
+      const API_CONFIG = await getApiConfig();
       const res = await CapacitorHttp.post({
         headers: {
           "Content-Type": "application/json",
         },
-        url: this.baseURL,
+        url: API_CONFIG.DB_EXTENSION_API_URL,
         data: {
           action: "update",
           table: "payment",
@@ -362,11 +366,12 @@ export class HttpPaymentApi {
   }
   static async delete(id: string): Promise<boolean> {
     try {
+      const API_CONFIG = await getApiConfig();
       const res = await CapacitorHttp.post({
         headers: {
           "Content-Type": "application/json",
         },
-        url: this.baseURL,
+        url: API_CONFIG.DB_EXTENSION_API_URL,
         data: {
           action: "read",
           table: "payment",
@@ -440,6 +445,7 @@ Terima kasih`;
     Number(cust.unpaid?.total).toLocaleString("id-ID"),
   );
   message = message.replaceAll("{jatuh_tempo}", String(`10 ${month} ${year}`));
+  const API_CONFIG = await getApiConfig();
   message = message.replaceAll(
     "{link_invoice}",
     String(
